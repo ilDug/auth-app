@@ -20,6 +20,14 @@ FINGERPRINT_COOKIE_LIFE = 3600 * 24 * 30  # trenta giorni
 ASSETS_PATH = ROOT / "assets"
 
 
+COOKIES_SETTINGS = {
+    "secure": True,
+    "httponly": True,
+    "samesite": "lax",
+    "expires": FINGERPRINT_COOKIE_LIFE,
+}
+
+
 # CORS
 ###############################
 CORS = {
