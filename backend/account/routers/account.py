@@ -1,32 +1,29 @@
 from typing import Annotated, Optional
 from pydantic.networks import EmailStr
-from fastapi import APIRouter, Body, Path, Response
-from core.config import FINGERPRINT_COOKIE_LIFE
-from ..models import RegisterRequestModel, LoginRequestModel, PasswordRestoreKeychain
+from fastapi import APIRouter, Body, Path, Query, Response
+from core.config import FINGERPRINT_COOKIE_LIFE, COOKIES_SETTINGS
+from models import RegisterRequestModel, LoginRequestModel, PasswordRestoreKeychain
 from ..controllers import Account, AccountActivation, Password
 
 
 router = APIRouter(tags=["account"])
 
-cookies_setting = {
-    "secure": True,
-    "httponly": True,
-    "samesite": "lax",
-    "expires": FINGERPRINT_COOKIE_LIFE,
-}
-
 
 @router.post("/account/login")
 async def login(res: Response, user: Annotated[LoginRequestModel, Body(...)]):
     token, fingerprint = Account.login(**user.model_dump())
-    res.set_cookie("fingerprint", fingerprint, **cookies_setting)
+    res.set_cookie("fingerprint", fingerprint, **COOKIES_SETTINGS)
     return token
 
 
 @router.post("/account/register")
-async def register(res: Response, user: Annotated[RegisterRequestModel, Body(...)]):
+async def register(
+    res: Response,
+    user: Annotated[RegisterRequestModel, Body(...)],
+    notify: Annotated[bool, Query()] = True,
+):
     token, fingerprint = Account.register(**user.model_dump())
-    res.set_cookie("fingerprint", fingerprint, **cookies_setting)
+    res.set_cookie("fingerprint", fingerprint, **COOKIES_SETTINGS)
     return token
 
 

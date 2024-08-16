@@ -5,8 +5,8 @@ from string import Template
 from datetime import datetime
 from fastapi import HTTPException
 from pymongo import MongoClient
-from ..models import AccountModel, LoginResponse, AccountActionKeyModel
-from .tokens import Tokens
+from models import AccountModel, LoginResponse, AccountActionKeyModel
+from auth import JWT
 
 # from core import DagMail, DagMailConfig
 from core.utils import random_string
@@ -22,7 +22,7 @@ from core.email import DagMail, DagMailConfig
 
 class Account:
     ACTIVATION_SCOPE = "account_activation"
-    USER_NAMESPACE = uuid.UUID("6aaaa2c0-6254-4840-ae71-a73575121820")
+    USER_NAMESPACE = uuid.UUID("24198490-e89c-4771-a941-ec2137d55905")
 
     @classmethod
     def login(cls, email: str, password: str) -> tuple[LoginResponse, str]:
@@ -52,7 +52,8 @@ class Account:
                 raise HTTPException(500, "password non corretta per questo account.")
 
             # crea i tokens e gli oggetti JWT
-            (token, fingerprint, access) = Tokens.generate_bundle(user)
+            jwt = JWT()
+            (token, fingerprint, access) = jwt.generate_tokens_bundle(user)
 
             # inserisce il l'accesso  nel database  per la verifica di refresh
             c[DB].account_accesses.insert_one(access.model_dump())
@@ -60,7 +61,9 @@ class Account:
             return LoginResponse(dat=token), fingerprint
 
     @classmethod
-    def register(cls, email: str, password: str):
+    def register(
+        cls, email: str, password: str, notify: bool = True
+    ) -> tuple[LoginResponse, str]:
         """registra l'utente e  ritorna i dati di accesso"""
 
         if not email:
@@ -131,8 +134,11 @@ class Account:
                         )
 
                     # manda la mail di attivazione
-                    if not cls.send_activation_email(email, activation_key):
-                        raise HTTPException(500, "errori di invio email di attivazione")
+                    if notify:
+                        if not cls.send_activation_email(email, activation_key):
+                            raise HTTPException(
+                                500, "errori di invio email di attivazione"
+                            )
 
                 return cls.login(email, password)
 
