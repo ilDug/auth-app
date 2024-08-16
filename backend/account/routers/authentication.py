@@ -1,8 +1,9 @@
 # from typing import Annotated
-# from fastapi import Cookie, APIRouter, Header, Query
+from fastapi import Cookie, APIRouter, Header, Query
+
 # from core.auth import Auth
 
-# router = APIRouter(tags=["auth"])
+router = APIRouter(tags=["auth"])
 
 
 # @router.get("/auth/authenticate")

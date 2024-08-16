@@ -7,7 +7,8 @@
 # from core.email import DagMail, DagMailConfig
 # from core.utils.string import random_string
 # from ..models import AccountModel, AccountActionKeyModel
-# from .account import Account
+from .account import Account
+
 # from core.config import (
 #     ET_PASSWORD_RECOVER,
 #     MAIL_CONFIG,
@@ -21,7 +22,10 @@
 # #############################################################################################
 
 
-# class Password(Account):
+class Password(Account):
+    pass
+
+
 #     RECOVER_SCOPE = "recover_password"
 
 #     @classmethod

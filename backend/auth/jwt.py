@@ -13,9 +13,10 @@ class JWT:
 
     CERT: str = JWT_CERT
     KEY: str = JWT_KEY
+    TOKEN_LIFE = AUTH_TOKEN_LIFE
 
     def __base_payload(self, duration: int) -> dict:
-        """genera il payload monimi per la creazione del token"""
+        """genera il payload minimo per la creazione del token"""
         now = datetime.now()
         delta = timedelta(hours=3)
         before = now - delta
@@ -28,10 +29,10 @@ class JWT:
 
         return payload
 
-    def create(self, claims: dict, duration=AUTH_TOKEN_LIFE) -> str:
+    def create(self, claims: dict) -> str:
         """genera il token in base al payload/claims passati come argomento. Duration [ore] (24*30 = 720)"""
         try:
-            payload = self.__base_payload(duration)
+            payload = self.__base_payload(self.TOKEN_LIFE)
             payload = {**payload, **claims}
 
             # crea il token (stringa)
@@ -60,10 +61,8 @@ class JWT:
 
         return fingerprint, fingerprint_hash
 
-    def generate_tokens_bundle(
-        self, user: AccountModel
-    ) -> tuple[str, str, AccountAccessModel]:
-        """genera il token, il fingerprint e il modello di accesso"""
+    def generate_tokens_bundle(self, user: AccountModel) -> tuple[str, str]:
+        """genera il token, il fingerprint"""
 
         fingerprint, fingerprint_hash = self.fingerprint()
 
@@ -73,17 +72,6 @@ class JWT:
         }
 
         token: str = self.create(payload)
-        jti: str = self.verify(token).jti
-        access = AccountAccessModel(uid=user.uid, jti=jti)
+        jwt: str = self.verify(token)
 
-        return token, fingerprint, access
-
-        # refresh_token: str = JWT.create(
-        #     {
-        #         "fingerprint_hash": fingerprint_hash,
-        #         "passcode": str(uuid.uuid4()),
-        #     },
-        #     duration=REFRESH_TOKEN_LIFE,
-        # )
-
-        # refresh_jwt: JWTRefresh = JWT.verify(refresh_token)
+        return token, fingerprint

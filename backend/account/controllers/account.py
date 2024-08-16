@@ -16,6 +16,7 @@ from core.config import (
     DB,
     MAIL_CONFIG,
     ET_USER_ACTIVATION,
+    HOST,
 )
 from core.email import DagMail, DagMailConfig
 
@@ -23,10 +24,11 @@ from core.email import DagMail, DagMailConfig
 class Account:
     ACTIVATION_SCOPE = "account_activation"
     USER_NAMESPACE = uuid.UUID("24198490-e89c-4771-a941-ec2137d55905")
+    ACTIVATION_LINK = f"{HOST}/api/account/activate"
 
     @classmethod
-    def login(cls, email: str, password: str) -> tuple[LoginResponse, str]:
-        """si connette al server e restituisce il la LoginResponse e il fingerprint per i cookies"""
+    def verify_credential_arguments(cls, email: str, password: str) -> tuple[str, str]:
+        """verifica che i parametri di login siano corretti"""
 
         if not email:
             raise HTTPException(400, "il campo email non è specificato")
@@ -35,6 +37,14 @@ class Account:
             raise HTTPException(400, "la richiesta non contiene la password")
 
         email = email.lower().strip()
+
+        return email, password
+
+    @classmethod
+    def login(cls, email: str, password: str) -> tuple[LoginResponse, str]:
+        """si connette al server e restituisce il la LoginResponse e il fingerprint per i cookies"""
+
+        email, password = cls.verify_credential_arguments(email, password)
 
         with MongoClient(MONGO_CS) as c:
             # controlla che l'utente sia presente nel database
@@ -53,10 +63,7 @@ class Account:
 
             # crea i tokens e gli oggetti JWT
             jwt = JWT()
-            (token, fingerprint, access) = jwt.generate_tokens_bundle(user)
-
-            # inserisce il l'accesso  nel database  per la verifica di refresh
-            c[DB].account_accesses.insert_one(access.model_dump())
+            (token, fingerprint) = jwt.generate_tokens_bundle(user)
 
             return LoginResponse(dat=token), fingerprint
 
@@ -66,13 +73,7 @@ class Account:
     ) -> tuple[LoginResponse, str]:
         """registra l'utente e  ritorna i dati di accesso"""
 
-        if not email:
-            raise HTTPException(400, "il campo email non è specificato")
-
-        if not password:
-            raise HTTPException(400, "la richiesta non contiene la password")
-
-        email = email.lower().strip()
+        email, password = cls.verify_credential_arguments(email, password)
 
         # controlla che l'utente esista
         email_hash = hashlib.md5(email.encode()).hexdigest()
@@ -157,8 +158,9 @@ class Account:
         """manda la email con il codice di attivazione dell'account,
         @return boolean se la mail è stata invata"""
 
+        link = f"{cls.ACTIVATION_LINK}/{activation_key}"
         template = ET_USER_ACTIVATION.read_text()
-        body = Template(template).substitute(ACTIVATION_KEY=activation_key)
+        body = Template(template).substitute(ACTIVATION_LINK=link)
 
         try:
             config = DagMailConfig(**MAIL_CONFIG)

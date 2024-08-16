@@ -3,7 +3,8 @@
 # from fastapi import HTTPException
 # from pymongo import MongoClient
 # from ..models import AccountModel, AccountActionKeyModel
-# from .account import Account
+from .account import Account
+
 # from core.config import ACTIVATION_KEY_LENGTH, MONGO_CS, DB
 
 
@@ -12,7 +13,10 @@
 # #############################################################################################
 
 
-# class AccountActivation(Account):
+class AccountActivation(Account):
+    pass
+
+
 #     @classmethod
 #     def activate(cls, key: str) -> bool:
 #         """Attiva l'account"""

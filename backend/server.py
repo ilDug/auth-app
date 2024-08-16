@@ -9,9 +9,8 @@ from core import validation_exception_handler, http_rewrite_header_handler
 from core.config import CORS, ASSETS_PATH
 from core.utils import fastapi_version
 
-
 # IMPORT ROUTERS
-
+from account.routers import account_router
 
 # MAIN FASTAPI APP
 app = FastAPI(root_path="/api")
@@ -26,7 +25,7 @@ app.add_exception_handler(HTTPException, http_rewrite_header_handler)
 
 
 # ROUTERS
-# app.include_router(account_router)
+app.include_router(account_router)
 
 
 #  STATIC FILES

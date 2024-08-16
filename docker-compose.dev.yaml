@@ -1,5 +1,3 @@
-version: "3.9"
-
 networks:
     # rete per la comunicazione interna dei containers
     auth-net:
@@ -21,9 +19,9 @@ secrets:
         file: lib/secrets/MAIL_CONFIG
 
 ##########################################
-# volumes:
-#     shop-vol:
-#         name: shop-vol
+volumes:
+    auth-vol:
+        name: auth-vol
 
 ##########################################
 services:
@@ -32,10 +30,12 @@ services:
             context: ./
             dockerfile: Dockerfile.dev.api
         restart: unless-stopped
-        # container_name: auth-backend
+        container_name: backend
         environment:
             MODE: DEVELOPMENT
             TZ: Europe/Rome
+            MONGO_USER: auth_user
+            MONGO_DB: auth_db
         networks:
             - auth-net
             - default
@@ -48,5 +48,27 @@ services:
             # - /etc/localtime:/etc/localtime:ro
         secrets:
             - MAIL_CONFIG
+            - MONGO_USER_PW
 
         # network_mode: "bridge"
+
+    db:
+        image: mongo:7
+        restart: unless-stopped
+        container_name: db
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: root
+            MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/MONGO_ROOT_PW
+            MONGO_USER: auth_user
+            MONGO_DB: auth_db
+            # MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PW:?error}
+        ports:
+            - 27017:27017  # eliminare in PRODUCTION
+        networks:
+            - auth-net
+        volumes:
+            - auth-vol:/data/db # il database è salvato nel volume di docker
+            - ./db/init:/docker-entrypoint-initdb.d # esegui i file al primo avvio
+        secrets:
+            - MONGO_ROOT_PW
+            - MONGO_USER_PW

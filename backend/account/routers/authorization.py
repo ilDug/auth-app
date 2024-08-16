@@ -1,9 +1,10 @@
 # from typing import Annotated
 # from fastapi.param_functions import Path
-# from fastapi import Cookie, APIRouter, Header
+from fastapi import Cookie, APIRouter, Header
+
 # from core.auth import Auth
 
-# router = APIRouter(tags=["auth"])
+router = APIRouter(tags=["auth"])
 
 
 # @router.get("/auth/authorization/check/permission/{permission}")

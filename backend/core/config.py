@@ -5,6 +5,9 @@ import json
 ROOT = Path("/app")
 MODE = env["MODE"]
 
+HOST = "https://auth.dag.lan" if MODE == "PRODUCTION" else "http://localhost:8000"
+
+
 # JWT
 ###############################
 JWT_KEY = (ROOT / "lib/keys/auth.key").read_text()
