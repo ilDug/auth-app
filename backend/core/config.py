@@ -1,5 +1,6 @@
 from os import environ as env
 from pathlib import Path
+import json
 
 ROOT = Path("/app")
 MODE = env["MODE"]
@@ -53,3 +54,23 @@ CORS = {
         # "Access-Control-Expose-Headers"
     ],
 }
+
+
+# MONGO
+###############################################
+MONGO_USER = env["MONGO_USER"]
+DB = env["MONGO_DB"]
+MONGO_PW = Path("/run/secrets/MONGO_USER_PW").read_text()
+MONGO_CS = f"mongodb://{MONGO_USER}:{MONGO_PW}@db:27017/{DB}?authSource=admin"
+
+# MAIL
+###############################
+MAIL_CONFIG_PATH = Path("/run/secrets/MAIL_CONFIG")
+MAIL_CONFIG = json.loads(MAIL_CONFIG_PATH.read_text())
+
+# email template PATH
+ET_PATH = ROOT / "lib/templates"
+
+# EMAIL TEMPLATES
+ET_USER_ACTIVATION = ET_PATH / "user-activation.html"
+ET_PASSWORD_RECOVER = ET_PATH / "recover-password.html"
