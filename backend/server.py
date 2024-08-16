@@ -5,6 +5,11 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.staticfiles import StaticFiles
 from datetime import datetime
 
+from core import validation_exception_handler, http_rewrite_header_handler
+from core.config import CORS, ASSETS_PATH
+from core.utils import fastapi_version
+
+
 # IMPORT ROUTERS
 
 
@@ -12,7 +17,7 @@ from datetime import datetime
 app = FastAPI(root_path="/api")
 
 # MIDDLEWARE
-app.add_middleware(CORSMiddleware, **cors_mw_config)
+app.add_middleware(CORSMiddleware, **CORS)
 
 
 #  EXCEPTION HANDLERS
@@ -33,5 +38,4 @@ app.mount("/assets", StaticFiles(directory=ASSETS_PATH), name="static_media")
 async def root():
     return f"""API SERVER RUNNING... FASTAPI {fastapi_version()}.
 Server time: {datetime.now()} (isoformat: {datetime.now().isoformat() })
-database: {DB} --- MongoDB user: {MONGO_USER}
 """
