@@ -1,0 +1,52 @@
+version: "3.9"
+
+networks:
+    # rete per la comunicazione interna dei containers
+    auth-net:
+        name: auth-net
+
+    # rete di default per la comunicazione con il proxy,
+    # da instanziare solo sui containers che si espongono
+    default:
+        name: traefik_net
+        external: true
+
+##########################################
+secrets:
+    MONGO_ROOT_PW:
+        file: lib/secrets/MONGO_ROOT_PW
+    MONGO_USER_PW:
+        file: lib/secrets/MONGO_USER_PW
+    MAIL_CONFIG:
+        file: lib/secrets/MAIL_CONFIG
+
+##########################################
+# volumes:
+#     shop-vol:
+#         name: shop-vol
+
+##########################################
+services:
+    backend:
+        build:
+            context: ./
+            dockerfile: Dockerfile.dev.api
+        restart: unless-stopped
+        # container_name: auth-backend
+        environment:
+            MODE: DEVELOPMENT
+            TZ: Europe/Rome
+        networks:
+            - auth-net
+            - default
+        ports:
+            - 8000:8000
+        volumes:
+            - ./backend:/app
+            - ./lib/assets:/app/assets
+            # - /etc/timezone:/etc/timezone:ro
+            # - /etc/localtime:/etc/localtime:ro
+        secrets:
+            - MAIL_CONFIG
+
+        # network_mode: "bridge"

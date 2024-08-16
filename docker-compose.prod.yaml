@@ -1,0 +1,88 @@
+# version: "3.9"
+
+# networks:
+
+#   # rete per la comunicazione interna dei containers
+#   shop-net:
+#     name: shop-net
+  
+#   # rete di default per la comunicazione con il proxy, 
+#   # da instanziare solo sui containers che si espongono 
+#   default:
+#     name: traefik_net
+#     external: true
+
+# ##########################################
+# secrets:
+#   MONGO_ROOT_PW:
+#     file: lib/secrets/MONGO_ROOT_PW
+#   MONGO_USER_PW:
+#     file: lib/secrets/MONGO_USER_PW
+#   MAIL_CONFIG:
+#     file: lib/secrets/MAIL_CONFIG
+#   PP_CLIENTID:
+#     file: lib/secrets/PP_CLIENTID
+#   PP_SECRET:
+#     file: lib/secrets/PP_SECRET
+
+# ##########################################
+# volumes:
+#   shop-vol:
+#     name: shop-vol
+
+# ##########################################
+# services:
+
+#   db:
+#     image: mongo:7
+#     restart: unless-stopped
+#     container_name: shop-db
+#     env_file:
+#       - ./lib/environments/dev.env
+#     environment:
+#       MONGO_INITDB_ROOT_USERNAME: root
+#       MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/MONGO_ROOT_PW
+#       # MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PW:?error}
+#     networks:
+#       - shop-net
+#     volumes:
+#       - shop-vol:/data/db # il database è salvato nel volume di docker
+#       - ./db/init:/docker-entrypoint-initdb.d # esegui i file al primo avvio
+#     secrets:
+#       - MONGO_ROOT_PW
+#       - MONGO_USER_PW
+
+
+#   api:
+#     image: ghcr.io/ildug/shop-api:latest
+#     restart: unless-stopped
+#     container_name: shop-api
+#     depends_on:
+#       - db
+#     env_file:
+#       - ./lib/environments/prod.env
+#     environment:
+#       MODE: PRODUCTION
+#       TZ: Europe/Rome
+#     networks:
+#       - shop-net
+#       - default
+#     volumes:
+#       - ./api:/app
+#       - ./lib/assets:/app/assets
+#       - /etc/timezone:/etc/timezone:ro
+#       - /etc/localtime:/etc/localtime:ro
+#     secrets:
+#       - MONGO_USER_PW
+#       - MAIL_CONFIG
+#       - PP_CLIENTID
+#       - PP_SECRET
+#     # labels:
+#     #   - "traefik.enable=true"
+#     #   - "traefik.http.routers.shopapi.rule=Host(`posterbook.it`) && PathPrefix(`/api`) "
+#     #   - "traefik.http.routers.shopapi.entrypoints=websecure"
+#     #   - "traefik.http.routers.shopapi.tls=true"
+#     #   - "traefik.http.routers.shopapi.tls.certresolver=le"
+#     #   - "traefik.http.routers.shopapi.middlewares=api_stripprefix@docker"
+#     #   - "traefik.http.middlewares.shopapi-stripprefix.stripprefix.prefixes=/api" 
+#     # network_mode: "bridge"
