@@ -6,11 +6,11 @@ from fastapi.staticfiles import StaticFiles
 from datetime import datetime
 
 from core import validation_exception_handler, http_rewrite_header_handler
-from core.config import CORS, ASSETS_PATH
+from core.config import CORS, ASSETS_PATH, MONGO_CS
 from core.utils import fastapi_version
 
 # IMPORT ROUTERS
-from account.routers import account_router
+from account.routers import account_router, auth_router
 
 # MAIN FASTAPI APP
 app = FastAPI(root_path="/api")
@@ -26,6 +26,7 @@ app.add_exception_handler(HTTPException, http_rewrite_header_handler)
 
 # ROUTERS
 app.include_router(account_router)
+app.include_router(auth_router)
 
 
 #  STATIC FILES
@@ -37,4 +38,5 @@ app.mount("/assets", StaticFiles(directory=ASSETS_PATH), name="static_media")
 async def root():
     return f"""API SERVER RUNNING... FASTAPI {fastapi_version()}.
 Server time: {datetime.now()} (isoformat: {datetime.now().isoformat() })
+CONNECTION string: {MONGO_CS}
 """

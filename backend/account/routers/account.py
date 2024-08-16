@@ -41,10 +41,9 @@ async def register(
 #     return account.resend_activation_email(email_md5_hash)
 
 
-# @router.get("/account/exists/{email_md5_hash}")
-# async def user_exists(email_md5_hash: Annotated[str, Path(...)]):
-#     account = Account()
-#     return account.exists(email_md5_hash)
+@router.get("/account/exists/{email_md5_hash}")
+async def user_exists(email_md5_hash: Annotated[str, Path(...)]):
+    return Account().exists(email_md5_hash)
 
 
 # @router.post(

@@ -145,6 +145,7 @@ class Account:
 
     @classmethod
     def exists(cls, email_hash: str) -> bool:
+        """verifica se l'utente esiste nel database"""
         with MongoClient(MONGO_CS) as c:
             emails = [
                 hashlib.md5(e["email"].encode()).hexdigest()

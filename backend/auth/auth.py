@@ -29,7 +29,8 @@ class Auth(JWT):
             )
 
         ##### FINGERPRINT
-        if env["MODE"] == "PRODUCTION":
+        # if env["MODE"] == "PRODUCTION":
+        if True:
             if fingerprint is None:
                 raise HTTPException(401, "Unauthorized - fingerprint assente")
 
