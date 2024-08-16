@@ -14,11 +14,6 @@ AUTH_TOKEN_LIFE = 24 * 30  # trenta giorni
 REFRESH_TOKEN_LIFE = 24 * 30  # trenta giorni
 FINGERPRINT_COOKIE_LIFE = 3600 * 24 * 30  # trenta giorni
 
-# DB
-###############################
-USERS_PATH = ROOT / "lib/db/users.yaml"
-AUTHORIZATIONS_PATH = ROOT / "lib/db/authorizations.yaml"
-ACCESSES_PATH = ROOT / "lib/db/accesses"
 
 # STATIC FILES
 ###############################
