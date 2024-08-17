@@ -8,6 +8,8 @@ pip install "fastapi[all]" \
     icecream \
     PyJWT \
     pymongo \
+    asyncio \
+    httpx \
     requests \
     
 pip freeze > requirements.txt
