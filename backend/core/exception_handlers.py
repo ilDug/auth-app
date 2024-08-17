@@ -23,9 +23,8 @@ ic.configureOutput(includeContext=True)
 
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """cattura tutti gli errori di validazione di pydantic"""
-    ic("catch DAG PYDANTIC ERROR...")
     errors = [f"{e['msg']} - {e['type']}: {' '.join(e['loc'])}" for e in exc.errors()]
-
+    ic("catch DAG PYDANTIC ERROR...")
     return JSONResponse(
         content=jsonable_encoder({"error": errors[0]}),
         status_code=400,
@@ -35,7 +34,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 async def http_rewrite_header_handler(req: Request, exc: HTTPException):
     """Cattura tutti gli errori per poi poterli restituire come status code nella Response del server"""
-    ic("catch DAG HTTP ERROR...")
+    ic("catch DAG HTTP ERROR...", exc.status_code, exc.detail)
 
     return JSONResponse(
         content=jsonable_encoder({"error": exc.detail}),
