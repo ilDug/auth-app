@@ -1,7 +1,7 @@
 from typing import Annotated
 from fastapi import Cookie, APIRouter, Header, Path, Query, Request
 from auth import Auth
-# import time
+import time
 
 router = APIRouter(tags=["auth"])
 
@@ -21,8 +21,6 @@ async def authenticate(
     fingerprint: Annotated[str | None, Cookie()] = None,
 ):
     claims = Auth().authenticate(authorization, fingerprint, claims=claims)
-    # stop for 3 seconds
-    # time.sleep(6)
     return claims
 
 
