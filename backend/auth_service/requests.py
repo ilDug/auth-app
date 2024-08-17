@@ -3,15 +3,15 @@ from fastapi import Header, HTTPException, Cookie, Depends, Query
 import requests
 import requests.exceptions
 import httpx
-
-AUTHENTICATION_URL = "http://backend:8000/auth/authenticate?claims=True"
-AUTHORIZATION_URL = "http://backend:8000/auth/authorize"
+from .endpoints import AUTHENTICATION_URL, AUTHORIZATION_URL
 
 
-async def authentication(
+async def authentication_request(
     authorization: Annotated[str | None, Header()] = None,
     fingerprint: Annotated[str | None, Cookie()] = None,
-):
+) -> dict:
+    """Request to the authentication service to get the claims of the user"""
+
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(
@@ -40,26 +40,40 @@ async def authentication(
         raise HTTPException(e.status_code, e.detail)
 
 
-async def user_id(
+async def authentication_guard(
+    claims: Annotated[dict, Depends(authentication_request)]
+) -> bool:
+    """Check if the user is authenticated"""
+
+    return claims is not None
+
+
+async def get_user_id(
     authorization: Annotated[str | None, Header()] = None,
     fingerprint: Annotated[str | None, Cookie()] = None,
-):
-    claims = await authentication(authorization, fingerprint)
+) -> str:
+    """Get the user id from the claims"""
+
+    claims = await authentication_request(authorization, fingerprint)
     return claims["uid"]
 
 
-async def permissions(
+async def get_permissions(
     authorization: Annotated[str | None, Header()] = None,
     fingerprint: Annotated[str | None, Cookie()] = None,
-):
-    claims = await authentication(authorization, fingerprint)
+) -> list:
+    """Get the permissions from the claims"""
+
+    claims = await authentication_request(authorization, fingerprint)
     return claims["authorizations"]
 
 
-async def authorization(
+async def authorization_request(
     authorization: Annotated[str | None, Header()] = None,
     fingerprint: Annotated[str | None, Cookie()] = None,
-):
+) -> Callable:
+    """Request to the authorization service to check if the user has the permission, and return a function to check the permission"""
+
     async def authorizeFn(permission: str):
         try:
             async with httpx.AsyncClient() as client:
@@ -94,5 +108,9 @@ async def authorization(
     return authorizeFn
 
 
-async def is_admin(authorizeFn: Annotated[Callable, Depends(authorization)]):
+async def is_admin(
+    authorizeFn: Annotated[Callable, Depends(authorization_request)]
+) -> bool:
+    """Check if the user has the admin permission"""
+
     return await authorizeFn("admin")

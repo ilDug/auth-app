@@ -1,11 +1,17 @@
 from fastapi import APIRouter
-from auth_service import AuthClaims, UserId, AuthPermissions, AuthorizeFn
+from auth_service import (
+    AuthClaims,
+    UserId,
+    AuthPermissions,
+    AuthorizeFn,
+    AuthenticationGuard,
+)
 
 router = APIRouter(tags=["tests"])
 
 
 @router.get("/tests/authenticate")
-async def authentication(claims: AuthClaims):
+async def authentication(claims: AuthenticationGuard):
     return claims
 
 
