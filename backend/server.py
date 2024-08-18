@@ -11,7 +11,8 @@ from core.config import CORS, ASSETS_PATH, MONGO_CS
 from core.utils import fastapi_version
 
 # IMPORT ROUTERS
-from account.routers import account_router
+from account import account_router
+from users import user_router
 from tests.tests import router as tests_router
 
 # MAIN FASTAPI APP
@@ -29,7 +30,8 @@ app.add_exception_handler(HTTPException, http_rewrite_header_handler)
 # ROUTERS
 app.include_router(account_router)
 app.include_router(auth_router)
-app.include_router(tests_router)
+app.include_router(user_router)
+# app.include_router(tests_router)
 
 
 #  STATIC FILES

@@ -3,7 +3,7 @@ from pydantic.networks import EmailStr
 from fastapi import APIRouter, Body, Path, Query, Response
 from core.config import FINGERPRINT_COOKIE_LIFE, COOKIES_SETTINGS
 from models import RegisterRequestModel, LoginRequestModel, PasswordRestoreKeychain
-from ..controllers import Account, AccountActivation, Password
+from .controllers import Account, AccountActivation, Password
 
 
 router = APIRouter(tags=["account"])
