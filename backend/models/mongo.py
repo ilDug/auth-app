@@ -1,21 +1,15 @@
+from datetime import datetime
 from pydantic import (
     AfterValidator,
     BaseModel,
     ConfigDict,
-    GetCoreSchemaHandler,
     PlainSerializer,
     WithJsonSchema,
-    field_serializer,
     Field,
-    GetJsonSchemaHandler,
 )
-from pydantic.json_schema import JsonSchemaValue
-from pydantic_core import core_schema
 
-from datetime import datetime
 from bson import ObjectId
-from uuid import UUID
-from typing import Annotated, Any, Callable, Optional, Type
+from typing import Annotated
 
 
 ######################################
@@ -23,83 +17,42 @@ from typing import Annotated, Any, Callable, Optional, Type
 ######################################
 
 
-# class ObjectIdField(str):
-#     @classmethod
-#     def __get_pydantic_core_schema__(
-#         cls, _source_type: Any, _handler: Any
-#     ) -> core_schema.CoreSchema:
-#         object_id_schema = core_schema.chain_schema(
-#             [
-#                 core_schema.str_schema(),
-#                 core_schema.no_info_plain_validator_function(cls.validate),
-#             ]
-#         )
+def validate_object_id(id: any) -> ObjectId:
+    if isinstance(id, ObjectId):
+        return id
+    if ObjectId.is_valid(id):
+        return ObjectId(id)
+    raise ValueError("Invalid ObjectId [DAG]")
 
-#         return core_schema.json_or_python_schema(
-#             json_schema=object_id_schema,
-#             python_schema=core_schema.union_schema(
-#                 [core_schema.is_instance_schema(ObjectId), object_id_schema]
-#             ),
-#             serialization=core_schema.plain_serializer_function_ser_schema(
-#                 lambda x: str(x)
-#             ),
-#         )
 
-#     @classmethod
-#     def validate(cls, value):
-#         if not ObjectId.is_valid(value):
-#             raise ValueError("Invalid id DAG")
-
-#         return ObjectId(value)
-
-#  /////////////////////////////////////////////////////////////////////////////////////
+Oid = Annotated[
+    str | ObjectId | None,
+    PlainSerializer(
+        lambda oid: str(oid) if oid is not None else None,
+        return_type=str,
+        when_used="always",
+    ),
+    AfterValidator(validate_object_id),
+    WithJsonSchema({type: "string"}, mode="serialization"),
+    Field(None, validation_alias="_id"),
+]
+"""ObjectId di MongoDB - definizione del tipo, del validatore, con alias _id e del serializzatore che lo trasforma in stringa"""
 
 
 class MongoModel(BaseModel):
-    id: Annotated[str | ObjectId | None, Field(alias="_id", exclude=True)] = None
+    """classe base per i modelli MongoDB"""
 
     model_config = ConfigDict(
         extra="allow",
         populate_by_name=True,
-        json_encoders={
-            # datetime: lambda dt: f"{dt:%Y-%m-%dT%H:%M:%S.%f%Z}+00:00",
-            # datetime: lambda dt: dt.isoformat(),
-            datetime: lambda dt: f"{dt.isoformat()}+00:00",
-            ObjectId: lambda oid: str(oid),
-            UUID: lambda uuid: str(uuid),
-        },
+        populate_by_alias=True,
         arbitrary_types_allowed=True,
+        # json_encoders={
+        # datetime: lambda dt: f"{dt.isoformat()}+00:00",
+        # datetime: lambda dt: f"{dt:%Y-%m-%dT%H:%M:%S.%f%Z}+00:00",
+        # UUID: lambda uuid: str(uuid),
+        # },
     )
 
-
-######################################
-### PYDANTIC V1
-######################################
-# class OId(ObjectId):
-#     @classmethod
-#     def __get_validators__(cls):
-#         yield cls.validate
-
-#     @classmethod
-#     def validate(cls, v):
-#         if not ObjectId.is_valid(v):
-#             raise ValueError("Invalid mongo objectid")
-#         return ObjectId(v)
-
-#     @classmethod
-#     def __modify_schema__(cls, field_schema):
-#         field_schema.update(type="string")
-
-
-# class MongoModel(BaseModel):
-#     # id: OId = Field(None, alias="_id")
-#     class Config:
-#         json_encoders = {
-#             # datetime: lambda dt: f"{dt:%Y-%m-%dT%H:%M:%S.%f%Z}+00:00",
-#             # datetime: lambda dt: dt.isoformat(),
-#             datetime: lambda dt: f"{dt.isoformat()}+00:00",
-#             ObjectId: lambda oid: str(oid),
-#             UUID: lambda uuid: str(uuid),
-#         }
-#         extra = "allow"
-#         populate_by_name = True
+    id: Oid
+    """ _id restituito dal database mongodb"""
