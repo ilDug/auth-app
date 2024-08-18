@@ -1,6 +1,6 @@
 from typing import Annotated, Callable
 from fastapi import Depends
-from .requests import (
+from .functions import (
     authentication_request,
     authentication_guard,
     authorization_request,

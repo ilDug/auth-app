@@ -3,7 +3,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Path
 from pydantic import AfterValidator
 from . import Users
 from models import UuidStr, UserModel
-from auth import authentication_guard, AuthenticationGuard
+from auth.dep_functions import authentication_guard
 
 router = APIRouter(tags=["users"], dependencies=[Depends(authentication_guard)])
 

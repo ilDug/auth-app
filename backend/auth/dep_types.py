@@ -1,6 +1,6 @@
 from typing import Annotated, Callable
 from fastapi import Depends
-from .functions import authentication_guard, authorization_fn, is_admin
+from .dep_functions import authentication_guard, authorization_fn, is_admin
 
 AuthenticationGuard = Annotated[bool, Depends(authentication_guard)]
 """verifica che l'utente sia autenticato"""
