@@ -58,7 +58,9 @@ class Account:
             user = AccountModel(**user)
 
             # verifica la password
-            if not bcrypt.checkpw(password.encode(), user.hashed_password.encode()):
+            if not bcrypt.checkpw(
+                password.encode(), user.hashed_password.get_secret_value().encode()
+            ):
                 raise HTTPException(500, "password non corretta per questo account.")
 
             # crea i tokens e gli oggetti JWT

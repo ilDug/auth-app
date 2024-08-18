@@ -1,9 +1,9 @@
 from datetime import datetime
-from pydantic import EmailStr
+from pydantic import BaseModel, EmailStr
 from .mongo import MongoModel
 
 
-class JWTModel(MongoModel):
+class JWTModel(BaseModel, extra="allow"):
     nbf: datetime
     iat: datetime
     exp: datetime

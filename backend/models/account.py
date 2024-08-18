@@ -1,6 +1,6 @@
 from core.config import ACTIVATION_KEY_LENGTH
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, SecretStr
 from typing import Annotated, List
 from .mongo import MongoModel
 
@@ -13,10 +13,8 @@ class AccountModel(MongoModel):
     email: EmailStr
     active: bool = False
     authorizations: List[str] = []
-    hashed_password: str | None = None
+    hashed_password: SecretStr | None = None
     registration_date: datetime | None = None
-    # username: str | None = None
-    # _pj = {"hashed_password": 0, "registration_date": 0}
 
 
 class AccountActionKeyModel(MongoModel):

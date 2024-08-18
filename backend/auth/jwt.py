@@ -1,3 +1,4 @@
+from calendar import timegm
 from uuid import uuid4
 import hashlib
 import jwt
@@ -35,6 +36,11 @@ class JWT:
             payload = self.__base_payload(self.TOKEN_LIFE)
             payload = {**payload, **claims}
 
+            # DATETIME => Iterate the payload dictionary and Convert datetime to string
+            for key, value in payload.items():
+                if isinstance(value, datetime) and key not in ["nbf", "iat", "exp"]:
+                    payload[key] = f"{value.isoformat()}+00:00"
+
             # crea il token (stringa)
             token = jwt.encode(payload, self.KEY, algorithm="RS256")
             return token
@@ -67,7 +73,7 @@ class JWT:
         fingerprint, fingerprint_hash = self.fingerprint()
 
         payload = {
-            **user.model_dump(exclude={"id", "hashed_password", "registration_date"}),
+            **user.model_dump(exclude={"hashed_password", "id"}),
             "fingerprint_hash": fingerprint_hash,
         }
 
