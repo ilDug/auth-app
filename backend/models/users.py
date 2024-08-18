@@ -1,7 +1,8 @@
 from datetime import datetime
 from typing import List
 from pydantic import BaseModel, ConfigDict, EmailStr
-from models import MongoModel
+from .mongo import MongoModel
+from .uuid_str import UuidStr
 
 
 class UserModel(MongoModel):
@@ -9,7 +10,7 @@ class UserModel(MongoModel):
 
     model_config = ConfigDict(extra="ignore")
 
-    uid: str
+    uid: UuidStr
     username: str | None = None
     email: EmailStr
     active: bool = False

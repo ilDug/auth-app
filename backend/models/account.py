@@ -3,12 +3,12 @@ from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field, SecretStr
 from typing import Annotated, List
 from .mongo import MongoModel
-
+from .uuid_str import UuidStr
 
 class AccountModel(MongoModel):
     """classe che definisce le proprietà  minime di un account utente"""
 
-    uid: str
+    uid: UuidStr
     username: str | None = None
     email: EmailStr
     active: bool = False
