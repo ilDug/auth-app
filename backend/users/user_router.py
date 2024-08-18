@@ -1,10 +1,11 @@
 from typing import Annotated
-from fastapi import APIRouter, Body, HTTPException, Path
+from fastapi import APIRouter, Body, Depends, HTTPException, Path
 from pydantic import AfterValidator
 from . import Users
 from models import UuidStr, UserModel
+from auth import authentication_guard, AuthenticationGuard
 
-router = APIRouter(tags=["users"])
+router = APIRouter(tags=["users"], dependencies=[Depends(authentication_guard)])
 
 
 @router.get("/users")
