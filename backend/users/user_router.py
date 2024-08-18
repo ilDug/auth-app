@@ -1,13 +1,13 @@
 from typing import Annotated
 from fastapi import APIRouter, Body, Path
-
+from . import Users
 
 router = APIRouter(tags=["users"])
 
 
 @router.get("/users")
 async def get_users():
-    pass
+    return Users.items()
 
 
 @router.get("/users/{user_id}")

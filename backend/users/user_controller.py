@@ -1,17 +1,15 @@
 from fastapi import HTTPException
 from pymongo import MongoClient
 from core.config import MONGO_CS, DB
+from models import UserModel as User
 
 
 class Users:
 
     @classmethod
-    def add_user(self, user):
+    def items(self):
+        """restituisce la lista degli utenti registrati"""
         with MongoClient(MONGO_CS) as c:
-            id = c[DB].users.insert_one(user).inserted_id
-            if id is None:
-                raise HTTPException(500, "Error inserting user")
-            return id
-
-    def get_users(self):
-        pass
+            cursor = c[DB].accounts.find()
+            users = [User(**u) for u in cursor]
+            return users
