@@ -102,15 +102,16 @@ class Account:
                             break
 
                     # inserisce il nuovo utente
-                    account = AccountModel(
-                        uid=str(uid),
-                        email=email,
-                        active=False,
-                        authorizations=["basic"],
-                        hashed_password=hashed_pw,
-                        registration_date=datetime.now(),
-                    )
-                    id = c[DB].accounts.insert_one(account.model_dump()).inserted_id
+                    account = {
+                        "uid": str(uid),
+                        "username": None,
+                        "email": email,
+                        "active": False,
+                        "authorizations": ["basic"],
+                        "hashed_password": hashed_pw,
+                        "registration_date": datetime.now(),
+                    }
+                    id = c[DB].accounts.insert_one(account).inserted_id
 
                     if id is None:
                         raise HTTPException(500, str("errore inserimento nuovo utente"))

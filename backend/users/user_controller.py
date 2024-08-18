@@ -7,7 +7,7 @@ from models import UserModel as User
 class Users:
 
     @classmethod
-    def items(self) -> list[User]:
+    def items(cls) -> list[User]:
         """restituisce la lista degli utenti registrati"""
 
         with MongoClient(MONGO_CS) as c:
@@ -16,7 +16,7 @@ class Users:
             return users
 
     @classmethod
-    def load(self, user_id) -> User:
+    def load(cls, user_id) -> User:
         """restituisce un utente dal suo id"""
 
         with MongoClient(MONGO_CS) as c:
@@ -26,7 +26,7 @@ class Users:
             return User(**cursor)
 
     @classmethod
-    def remove(self, user_id) -> int:
+    def remove(cls, user_id) -> int:
         """rimuove un utente dal suo id"""
 
         with MongoClient(MONGO_CS) as c:
@@ -38,16 +38,18 @@ class Users:
             return x
 
     @classmethod
-    def update(self, user: User) -> User:
+    def update(cls, user: User) -> User:
         """aggiorna un utente"""
 
+        data = user.model_dump(exclude={"id", "uid", "reristration_date"})
+
         with MongoClient(MONGO_CS) as c:
-            cursor = c[DB].accounts.replace_one(
+            cursor = c[DB].accounts.update_one(
                 {"uid": user.uid},
-                user.model_dump(exclude={"id", "uid", "reristration_date"}),
+                {"$set": data},
             )
 
-            if not cursor.modified_count:
-                raise HTTPException(status_code=404, detail="User not found")
+            if not cursor:
+                raise HTTPException(status_code=500, detail="Error updating user")
 
-            return user
+            return cls.load(user.uid)

@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, Body, Path
+from fastapi import APIRouter, Body, HTTPException, Path
 from pydantic import AfterValidator
 from . import Users
 from models import UuidStr, UserModel
@@ -19,9 +19,9 @@ async def get_user(user_id: Annotated[UuidStr, Path()]):
 
 @router.put("/users")
 async def update_user(user: Annotated[UserModel, Body()]):
-    pass
+    return Users.update(user)
 
 
 @router.delete("/users/{user_id}")
 async def delete_user(user_id: Annotated[str, Path()]):
-    pass
+    return Users.remove(user_id)
