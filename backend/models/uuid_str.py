@@ -1,6 +1,5 @@
 from typing import Annotated
 import re
-from fastapi import Path
 from pydantic import AfterValidator
 
 

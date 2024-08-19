@@ -1,6 +1,5 @@
 from typing import Annotated, Callable
 from fastapi import Header, HTTPException, Cookie
-import requests.exceptions
 import httpx
 from ..endpoints import AUTHORIZATION_URL
 

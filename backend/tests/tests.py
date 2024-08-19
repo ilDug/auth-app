@@ -1,6 +1,5 @@
 from fastapi import APIRouter
 from remote_auth_service import (
-    AuthClaims,
     UserId,
     AuthPermissions,
     AuthorizeFn,

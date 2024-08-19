@@ -2,23 +2,11 @@ from fastapi import Request, HTTPException
 from fastapi.responses import PlainTextResponse, JSONResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
-from starlette.exceptions import HTTPException as StarletteHTTPException
 from pymongo.errors import PyMongoError
 
 from icecream import ic
 
 ic.configureOutput(includeContext=True)
-
-
-# async def req_validation_error_handler(req: Request, exc: RequestValidationError):
-#     """cattura tutti gli errori di validazione"""
-
-#     ic("catch DAG REQUEST VALIDATOR ERROR...")
-#     errors = [e["msg"] for e in exc.errors()]
-
-#     return PlainTextResponse(
-#         content=str(exc), status_code=400, headers={"X-Error": errors[0]}
-#     )
 
 
 async def validation_exception_handler(request: Request, exc: RequestValidationError):

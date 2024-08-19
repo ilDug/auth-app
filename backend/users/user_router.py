@@ -1,6 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, Body, Depends, HTTPException, Path
-from pydantic import AfterValidator
+from fastapi import APIRouter, Body, Depends, Path
 from . import Users
 from models import UuidStr, UserModel
 from auth.dep_functions import authentication_guard

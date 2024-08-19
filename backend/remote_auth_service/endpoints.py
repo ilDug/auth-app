@@ -1,4 +1,4 @@
-from os import environ as env
+# from os import environ as env
 
 AUTH_HOST = "localhost:8000"  # env["AUTH_HOST"]
 AUTH_SERVER_URL = f"http://{AUTH_HOST}/auth"

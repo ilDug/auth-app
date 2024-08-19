@@ -1,7 +1,6 @@
 from typing import Annotated
-from fastapi import Cookie, APIRouter, Header, Path, Query, Request
+from fastapi import Cookie, APIRouter, Header, Query
 from auth import Auth
-import time
 
 router = APIRouter(tags=["auth"])
 

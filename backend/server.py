@@ -7,13 +7,12 @@ from datetime import datetime
 
 from auth import auth_router
 from core import validation_exception_handler, http_rewrite_header_handler
-from core.config import CORS, ASSETS_PATH, MONGO_CS
+from core.config import CORS, ASSETS_PATH
 from core.utils import fastapi_version
 
 # IMPORT ROUTERS
 from account import account_router
 from users import user_router
-from tests.tests import router as tests_router
 
 # MAIN FASTAPI APP
 app = FastAPI(root_path="/api")
@@ -31,7 +30,6 @@ app.add_exception_handler(HTTPException, http_rewrite_header_handler)
 app.include_router(account_router)
 app.include_router(auth_router)
 app.include_router(user_router)
-# app.include_router(tests_router)
 
 
 #  STATIC FILES
@@ -42,6 +40,5 @@ app.mount("/assets", StaticFiles(directory=ASSETS_PATH), name="static_media")
 @app.get("/", response_class=PlainTextResponse)
 async def root():
     return f"""API SERVER RUNNING... FASTAPI {fastapi_version()}.
-Server time: {datetime.now()} (isoformat: {datetime.now().isoformat() })
-CONNECTION string: {MONGO_CS}
+Server time: {datetime.now()} (isoformat: {datetime.now().isoformat()})
 """

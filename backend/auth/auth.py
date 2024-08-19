@@ -1,7 +1,6 @@
 import hashlib
 from . import JWT
 from fastapi import HTTPException
-from os import environ as env
 from models import JWTModel
 
 
@@ -28,8 +27,6 @@ class Auth(JWT):
                 401, "Unauthorized - il token non è valido (VERIFY ERROR)"
             )
 
-        ##### FINGERPRINT
-        # if env["MODE"] == "PRODUCTION":
         if True:
             if fingerprint is None:
                 raise HTTPException(401, "Unauthorized - fingerprint assente")

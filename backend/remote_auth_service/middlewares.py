@@ -32,10 +32,10 @@ EXAMPLE
 @router.get("/my/endpoint")
 async def my_function_with_permission(is_authorized: AuthorizeFn):
     authorized = await is_authorized("admin")
-    ... 
+    ...
     return ...
 ```
 """
 
 IsAdmin = Annotated[bool, Depends(is_admin)]
-"""verifica che \il client abbia il permesso di admin"""
+"""verifica che il client abbia il permesso di admin"""

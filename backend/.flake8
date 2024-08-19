@@ -1,0 +1,23 @@
+[flake8]
+; max-line-length = 88
+ignore = 
+    E501,
+    ; line too long
+    E266,
+    ; too many leading '#' for block comment
+    E731,
+    ; do not assign a lambda expression, use a def
+    F841,
+    ; local variable is assigned but never used
+
+exclude = 
+	.git,
+	__pycache__,
+    venv
+    __init__.py
+
+per-file-ignores = 
+    */__init__.py:F401
+    ; 'module' imported but unused
+    */__init__.py:F403
+    ; 'from module import *' used; unable to detect undefined names}

@@ -1,6 +1,5 @@
 import smtplib
 from email.mime.text import MIMEText
-import traceback
 from pydantic import BaseModel
 from pydantic.networks import EmailStr
 

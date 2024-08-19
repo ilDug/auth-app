@@ -1,5 +1,5 @@
 from typing import Annotated, Callable
-from fastapi import Cookie, HTTPException, Header
+from fastapi import Cookie, Header
 from .auth import Auth
 
 

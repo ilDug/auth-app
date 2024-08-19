@@ -1,4 +1,3 @@
-from calendar import timegm
 from uuid import uuid4
 import hashlib
 import jwt
@@ -6,7 +5,7 @@ from datetime import datetime, timedelta
 from cryptography.x509 import load_pem_x509_certificate
 from fastapi import HTTPException
 from core.config import JWT_CERT, JWT_KEY, AUTH_TOKEN_LIFE
-from models import JWTModel, AccountModel, AccountAccessModel
+from models import JWTModel, AccountModel
 
 
 class JWT:
