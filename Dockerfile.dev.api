@@ -9,6 +9,10 @@ COPY ./backend/requirements.txt ./
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
+ENV MONGO_HOST=db
+ENV MONGO_USER=auth_user
+ENV MONGO_DB=auth_db
+
 # Make port 8000 available to the world outside this container
 EXPOSE 8000
 

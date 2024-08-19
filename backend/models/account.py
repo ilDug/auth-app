@@ -5,6 +5,7 @@ from typing import Annotated, List
 from .mongo import MongoModel
 from .uuid_str import UuidStr
 
+
 class AccountModel(MongoModel):
     """classe che definisce le proprietà  minime di un account utente"""
 
