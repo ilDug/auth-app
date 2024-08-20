@@ -64,11 +64,11 @@ CORS = {
 
 # MONGO
 ###############################################
-MONGO_HOST = env["MONGO_HOST"]
+MONGO_HOST = env["MONGO_HOST"]  # host:password
 MONGO_USER = env["MONGO_USER"]
 DB = env["MONGO_DB"]
 MONGO_PW = Path("/run/secrets/MONGO_USER_PW").read_text()
-MONGO_CS = f"mongodb://{MONGO_USER}:{MONGO_PW}@{MONGO_HOST}:27017/{DB}?authSource=admin"
+MONGO_CS = f"mongodb://{MONGO_USER}:{MONGO_PW}@{MONGO_HOST}/{DB}?authSource=admin"
 
 # MAIL
 ###############################
