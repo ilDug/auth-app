@@ -19,9 +19,9 @@ COPY ./backend ./
 RUN mkdir -p ./lib/certs &&  mkdir -p ./lib/keys
 RUN openssl req -x509 -nodes -days   3650 -newkey rsa:4096 -config ./lib/openssl.cnf -keyout ./lib/keys/auth.key -out ./lib/certs/auth.crt
 
-ENV MONGO_HOST=db
+ENV MONGO_HOST=db:27017
 ENV MONGO_USER=auth_user
-ENV MONGO_DB=auth_db
+ENV MONGO_DB=auth
 
 # Make port 8000 available to the world outside this container
 EXPOSE 8000
