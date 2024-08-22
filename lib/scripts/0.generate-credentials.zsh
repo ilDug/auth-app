@@ -78,8 +78,8 @@ else
   IS_REPLICA_SET=false
 fi
 
-
-PW_FILE="$SECRETS/MONGO_${USER}_PW"
+USER_UPPER=$(echo $USER | tr '[:lower:]' '[:upper:]')
+PW_FILE="$SECRETS/MONGO_${USER_UPPER}_PW"
 
 # check if MONGO_USER_PW file exists
 if [ -f $PW_FILE ]; then
@@ -117,10 +117,10 @@ fi
 
 
 # print the connection string
-echo -e "\n${GREEN}generating credentials in  ./${USER}_credentials${NC}\n"
+echo -e "\n${GREEN}generating credentials in  ./mongo_${USER}_credentials.yaml${NC}\n"
 
 # save the credentials in a file
-cat << EOF > ./${SECRETS}/${USER}_credentials
+cat << EOF > ./${SECRETS}/mongo_${USER}_credentials.yaml
 username: 
     $USER
 
@@ -138,8 +138,15 @@ connection string:
 
 commands:
     access_to_shell_cmd:
-        ssh mongo1 "docker exec -it mongodb mongosh -u root -p \$(cat /var/mongo/MONGO_ROOT_PW) --authenticationDatabase admin"
-    
+        from_host: 
+            - docker exec -it mongodb mongosh "$MONGO_CS"
+            - docker exec -it mongodb mongosh -u root -p \$(cat /var/mongo/MONGO_ROOT_PW) --authenticationDatabase admin
+            - docker exec -it mongodb bash
+
+        from_container: 
+            - mongosh "$MONGO_CS"
+            - mongosh -u root -p \$(cat /run/secrets/MONGO_ROOT_PW) --authenticationDatabase admin
+
     create_user_cmd: | 
         use admin
 
@@ -160,6 +167,13 @@ commands:
                 { db: "$DB", role: "dbOwner" }
             ]
         )
+
+        db.grantRolesToUser("$USER", [
+            { db: "admin", role: "userAdminAnyDatabase" },
+            { db: "admin", role: "dbAdminAnyDatabase" },
+            { db: "admin", role: "clusterAdmin" },
+            { db: "admin", role: "root" },
+        ])
 
     change_pw_cmd: |
         use admin
