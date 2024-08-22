@@ -15,7 +15,10 @@ secrets:
         file: lib/secrets/MONGO_USER_PW
     MAIL_CONFIG:
         file: lib/secrets/MAIL_CONFIG
-    
+    JWT_CERT:
+        file: lib/secrets/certs/auth.crt
+    JWT_KEY:
+        file: lib/secrets/keys/auth.key
 
 ##########################################
 volumes:
@@ -31,7 +34,7 @@ services:
         environment:
             MODE: PRODUCTION
             TZ: Europe/Rome
-            MONGO_USER: auth_user
+            MONGO_USER: authuser
             MONGO_DB: auth
             MONGO_HOST: mongo1.dag.lan:27017,mongo2.dag.lan:27017,mongo3.dag.lan:27017
         networks:
@@ -47,6 +50,9 @@ services:
         secrets:
             - MAIL_CONFIG
             - MONGO_USER_PW
+            - JWT_CERT
+            - JWT_KEY
+
         labels:
             - "traefik.enable=true"
             - "traefik.http.routers.authbackend.rule=Host(`auth.dag.lan`) && PathPrefix(`/api`) "

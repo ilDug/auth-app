@@ -26,14 +26,6 @@ if [ $CREATE_CERTIFICATES = "y" ]; then
 
     # create  certificate key pair
     openssl req -x509 -nodes -days 3650 -newkey rsa:4096 -keyout $KEYS/auth.key -out $CERTS/auth.crt -config $CNF
-
-    # ask if the user want to copy the certificates to the destination directory
-    echo "Do you want to copy the certificates to the DEVELOPMENT directory? (y/n)"
-    read COPY_CERTIFICATES
-    if [ $COPY_CERTIFICATES = "y" ]; then
-        cp -R $CERTS $DEST
-        cp -R $KEYS $DEST
-    fi
 fi
 
 

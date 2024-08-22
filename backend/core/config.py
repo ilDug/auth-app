@@ -10,8 +10,8 @@ HOST = "https://auth.dag.lan" if MODE == "PRODUCTION" else "http://localhost:800
 
 # JWT
 ###############################
-JWT_KEY = (ROOT / "lib/keys/auth.key").read_text()
-JWT_CERT = (ROOT / "lib/certs/auth.crt").read_text()
+JWT_KEY = Path("/run/secrets/JWT_KEY").read_text()
+JWT_CERT = Path("/run/secrets/JWT_CERT").read_text()
 ACTIVATION_KEY_LENGTH = 64
 AUTH_TOKEN_LIFE = 24 * 30  # trenta giorni
 REFRESH_TOKEN_LIFE = 24 * 30  # trenta giorni
