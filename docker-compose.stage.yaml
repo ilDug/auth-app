@@ -1,7 +1,7 @@
 networks:
     # rete per la comunicazione interna dei containers
-    auth-net:
-        name: auth-net
+    # auth-net:
+    #     name: auth-net
 
     # rete di default per la comunicazione con il proxy,
     # da instanziare solo sui containers che si espongono
@@ -12,7 +12,7 @@ networks:
 ##########################################
 secrets:
     MONGO_USER_PW:
-        file: lib/secrets/MONGO_USER_PW
+        file: lib/secrets/MONGO_AUTHUSER_PW
     MAIL_CONFIG:
         file: lib/secrets/MAIL_CONFIG
     JWT_CERT:
@@ -28,7 +28,7 @@ volumes:
 ##########################################
 services:
     backend:
-        image: ghcr.io/ildug/auth-backend:latest
+        image: cr.dag.lan/auth-backend:latest
         restart: unless-stopped
         container_name: auth-backend
         environment:
@@ -38,15 +38,12 @@ services:
             MONGO_DB: auth
             MONGO_HOST: mongo1.dag.lan:27017,mongo2.dag.lan:27017,mongo3.dag.lan:27017
         networks:
-            - auth-net
             - default
-        # ports:
-        #     - 8000:8000
+            # - auth-net
         volumes:
-            - ./backend:/app
             - ./lib/assets:/app/assets
-            # - /etc/timezone:/etc/timezone:ro
-            # - /etc/localtime:/etc/localtime:ro
+            - /etc/timezone:/etc/timezone:ro
+            - /etc/localtime:/etc/localtime:ro
         secrets:
             - MAIL_CONFIG
             - MONGO_USER_PW
@@ -59,5 +56,5 @@ services:
             - "traefik.http.routers.authbackend.entrypoints=websecure"
             - "traefik.http.routers.authbackend.tls=true"
             # - "traefik.http.routers.authbackend.tls.certresolver=le"
-            - "traefik.http.routers.authbackend.middlewares=api_stripprefix@docker"
-            - "traefik.http.middlewares.api_stripprefix.stripprefix.prefixes=/api"
+            - "traefik.http.routers.authbackend.middlewares=auth_stripprefix@docker"
+            - "traefik.http.middlewares.auth_stripprefix.stripprefix.prefixes=/api"
