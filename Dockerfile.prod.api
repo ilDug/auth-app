@@ -7,20 +7,17 @@ WORKDIR /app
 COPY ./backend/requirements.txt ./
 
 #copy the openssl configuration file
-COPY ./lib/config/openssl.cnf ./lib/openssl.cnf
+COPY ./lib/config/openssl/openssl.cnf ./lib/openssl.cnf
 
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the backend directory contents into the container at /app
-COPY ./backend ./
+COPY ./backend/ ./
 
-# Create the SSL certificate and key
-RUN mkdir -p ./lib/certs &&  mkdir -p ./lib/keys
-RUN openssl req -x509 -nodes -days   3650 -newkey rsa:4096 -config ./lib/openssl.cnf -keyout ./lib/keys/auth.key -out ./lib/certs/auth.crt
-
+# Set the environment variables
 ENV MONGO_HOST=db:27017
-ENV MONGO_USER=auth_user
+ENV MONGO_USER=authsuser
 ENV MONGO_DB=auth
 
 # Make port 8000 available to the world outside this container
