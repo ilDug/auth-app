@@ -1,3 +1,3 @@
-from .account import *
-from .activation import *
+from .account import Account
+from .activation import AccountActivation
 from .password import Password
