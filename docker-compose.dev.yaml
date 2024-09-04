@@ -5,9 +5,9 @@ networks:
 
     # rete di default per la comunicazione con il proxy,
     # da instanziare solo sui containers che si espongono
-    default:
-        name: traefik_net
-        external: true
+    # default:
+    #     name: traefik_net
+    #     external: true
 
 ##########################################
 secrets:
