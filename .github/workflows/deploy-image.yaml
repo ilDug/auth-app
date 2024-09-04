@@ -34,8 +34,8 @@ jobs:
             - name: Build and push
               run: |
                   docker buildx create --driver docker-container --use
-                  docker buildx buid . \
-                    --file docker-compose.prod.yaml \
+                  docker buildx build . \
+                    --file Dockerfile.prod.api \
                     --tag ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ steps.tag.outputs.version }} \
                     --tag ${{ env.REGISTRY }}/${{ env.IMAGE }}:latest \
                     --platform linux/amd64,linux/arm64 \
