@@ -81,8 +81,8 @@ class Password(Account):
                 raise HTTPException(
                     500, "Errore nell recupero della password,  prova più tardi"
                 )
-
-            return True
+            else:
+                return True
 
     @classmethod
     def restore_init(cls, key: str) -> str:
