@@ -140,8 +140,10 @@ class Account:
                     # manda la mail di attivazione
                     if notify:
                         if not cls.send_activation_email(email, activation_key):
+                            print(f"errore invio mail di attivazione {datetime.now()}")
                             raise HTTPException(
-                                500, "errori di invio email di attivazione"
+                                500,
+                                "registrazione effettuata correttamente, ma con errore invio mail di attivazione. Prova a richiedere di nuovo l'email di attivazione.",
                             )
 
                 return cls.login(email, password)
