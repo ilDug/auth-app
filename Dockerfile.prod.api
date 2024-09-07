@@ -19,6 +19,8 @@ COPY ./backend/ ./
 ENV MONGO_HOST=db:27017
 ENV MONGO_USER=authsuser
 ENV MONGO_DB=auth
+ENV HOST="http://localhost:8000"
+
 
 # Make port 8000 available to the world outside this container
 EXPOSE 8000

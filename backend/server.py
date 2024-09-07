@@ -7,7 +7,7 @@ from datetime import datetime
 
 from auth import auth_router
 from core import validation_exception_handler, http_rewrite_header_handler
-from core.config import CORS, ASSETS_PATH
+from core.config import CORS, ASSETS_PATH, HOST
 from core.utils import fastapi_version
 
 # IMPORT ROUTERS
@@ -15,7 +15,12 @@ from account import account_router
 from users import user_router
 
 # MAIN FASTAPI APP
-app = FastAPI(root_path="/api")
+app = FastAPI(
+    title="DAG Auth service",
+    description="Authentication and Authorization server",
+    version="1",
+    # root_path="/api/v1",
+)
 
 # MIDDLEWARE
 app.add_middleware(CORSMiddleware, **CORS)
@@ -39,6 +44,6 @@ app.mount("/assets", StaticFiles(directory=ASSETS_PATH), name="static_media")
 # MAIN ROUTE
 @app.get("/", response_class=PlainTextResponse)
 async def root():
-    return f"""API SERVER RUNNING... FASTAPI {fastapi_version()}.
+    return f"""API SERVER RUNNING on {HOST}... FASTAPI {fastapi_version()}.
 Server time: {datetime.now()} (isoformat: {datetime.now().isoformat()})
 """

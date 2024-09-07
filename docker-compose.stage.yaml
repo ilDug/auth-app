@@ -33,6 +33,7 @@ services:
         container_name: auth-backend
         environment:
             MODE: PRODUCTION
+            HOST: "https://auth.dag.lan/api/v1" # HOST con protocollo, porta e prefix
             TZ: Europe/Rome
             MONGO_USER: authuser
             MONGO_DB: auth
@@ -52,9 +53,9 @@ services:
 
         labels:
             - "traefik.enable=true"
-            - "traefik.http.routers.authbackend.rule=Host(`auth.dag.lan`) && PathPrefix(`/api`) "
+            - "traefik.http.routers.authbackend.rule=Host(`auth.dag.lan`) && PathPrefix(`/api/v1`) "
             - "traefik.http.routers.authbackend.entrypoints=websecure"
             - "traefik.http.routers.authbackend.tls=true"
             # - "traefik.http.routers.authbackend.tls.certresolver=le"
             - "traefik.http.routers.authbackend.middlewares=auth_stripprefix@docker"
-            - "traefik.http.middlewares.auth_stripprefix.stripprefix.prefixes=/api"
+            - "traefik.http.middlewares.auth_stripprefix.stripprefix.prefixes=/api/v1"
