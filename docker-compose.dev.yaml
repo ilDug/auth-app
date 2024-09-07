@@ -41,7 +41,7 @@ services:
             TZ: Europe/Rome
             MONGO_USER: authuser
             MONGO_DB: auth
-            MONGO_HOST: db
+            MONGO_HOST: db:27017
         networks:
             - auth-net
             - default
