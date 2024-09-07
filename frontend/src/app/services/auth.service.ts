@@ -39,6 +39,9 @@ export class AuthService {
     // user username
     public username = computed<string>(() => this.token()?.claims["username"] ?? null);
 
+    // verifica se l'utente è attivo
+    public active = computed<boolean>(() => this.token()?.claims["active"] ?? false);
+
 
     /** salva il jwt nel localStorage ogni volta che viene aggiornato */
     #storeTokenEffect = effect(() => {
