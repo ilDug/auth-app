@@ -1,0 +1,638 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "DAG Auth service",
+        "description": "Authentication and Authorization server",
+        "version": "1"
+    },
+    "paths": {
+        "/account/login": {
+            "post": {
+                "tags": ["account"],
+                "summary": "Login",
+                "operationId": "login_account_login_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": { "$ref": "#/components/schemas/LoginRequestModel" }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": { "application/json": { "schema": {} } }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/account/register": {
+            "post": {
+                "tags": ["account"],
+                "summary": "Register",
+                "operationId": "register_account_register_post",
+                "parameters": [
+                    {
+                        "name": "notify",
+                        "in": "query",
+                        "required": false,
+                        "schema": { "type": "boolean", "default": true, "title": "Notify" }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": { "$ref": "#/components/schemas/RegisterRequestModel" }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": { "application/json": { "schema": {} } }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/account/exists/{email_md5_hash}": {
+            "get": {
+                "tags": ["account"],
+                "summary": "User Exists",
+                "operationId": "user_exists_account_exists__email_md5_hash__get",
+                "parameters": [
+                    {
+                        "name": "email_md5_hash",
+                        "in": "path",
+                        "required": true,
+                        "schema": { "type": "string", "title": "Email Md5 Hash" }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": { "application/json": { "schema": {} } }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/account/activate/{key}": {
+            "get": {
+                "tags": ["account"],
+                "summary": "Activate",
+                "operationId": "activate_account_activate__key__get",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": { "type": "string", "title": "Key" }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": { "application/json": { "schema": {} } }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/account/resend-activation/{email_md5_hash}": {
+            "get": {
+                "tags": ["account"],
+                "summary": "Resend",
+                "operationId": "resend_account_resend_activation__email_md5_hash__get",
+                "parameters": [
+                    {
+                        "name": "email_md5_hash",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "minLength": 32,
+                            "maxLength": 32,
+                            "title": "Email Md5 Hash"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": { "application/json": { "schema": {} } }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/account/password/recover": {
+            "post": {
+                "tags": ["account"],
+                "summary": "Password Recover",
+                "description": "genera una chiave di attivazione che permette di ripristinare la password",
+                "operationId": "password_recover_account_password_recover_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": { "schema": { "type": "object", "title": "Email" } }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": { "application/json": { "schema": {} } }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/account/password/restore/init/{key}": {
+            "get": {
+                "tags": ["account"],
+                "summary": "Password Restore Init",
+                "description": "esegue i controlli per la reimpostazione della password utente",
+                "operationId": "password_restore_init_account_password_restore_init__key__get",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": { "type": "string", "title": "Key" }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": { "application/json": { "schema": {} } }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/account/password/restore/set": {
+            "post": {
+                "tags": ["account"],
+                "summary": "Password Restore Set",
+                "description": "imposta la nuova password",
+                "operationId": "password_restore_set_account_password_restore_set_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": { "$ref": "#/components/schemas/PasswordRestoreKeychain" }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": { "application/json": { "schema": {} } }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/authenticate": {
+            "get": {
+                "tags": ["auth"],
+                "summary": "Authenticate",
+                "operationId": "authenticate_auth_authenticate_get",
+                "parameters": [
+                    {
+                        "name": "claims",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+                            "description": "Se True, restituisce i claims del token",
+                            "default": false,
+                            "title": "Claims"
+                        },
+                        "description": "Se True, restituisce i claims del token"
+                    },
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [{ "type": "string" }, { "type": "null" }],
+                            "title": "Authorization"
+                        }
+                    },
+                    {
+                        "name": "fingerprint",
+                        "in": "cookie",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [{ "type": "string" }, { "type": "null" }],
+                            "title": "Fingerprint"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": { "application/json": { "schema": {} } }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/authorize": {
+            "get": {
+                "tags": ["auth"],
+                "summary": "Authorization Check",
+                "operationId": "authorization_check_auth_authorize_get",
+                "parameters": [
+                    {
+                        "name": "permission",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "description": "il permesso o il ruolo da verificare",
+                            "title": "Permission"
+                        },
+                        "description": "il permesso o il ruolo da verificare"
+                    },
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [{ "type": "string" }, { "type": "null" }],
+                            "title": "Authorization"
+                        }
+                    },
+                    {
+                        "name": "fingerprint",
+                        "in": "cookie",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [{ "type": "string" }, { "type": "null" }],
+                            "title": "Fingerprint"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": { "application/json": { "schema": {} } }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users": {
+            "get": {
+                "tags": ["users"],
+                "summary": "Get Users",
+                "operationId": "get_users_users_get",
+                "parameters": [
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [{ "type": "string" }, { "type": "null" }],
+                            "title": "Authorization"
+                        }
+                    },
+                    {
+                        "name": "fingerprint",
+                        "in": "cookie",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [{ "type": "string" }, { "type": "null" }],
+                            "title": "Fingerprint"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": { "application/json": { "schema": {} } }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": ["users"],
+                "summary": "Update User",
+                "operationId": "update_user_users_put",
+                "parameters": [
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [{ "type": "string" }, { "type": "null" }],
+                            "title": "Authorization"
+                        }
+                    },
+                    {
+                        "name": "fingerprint",
+                        "in": "cookie",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [{ "type": "string" }, { "type": "null" }],
+                            "title": "Fingerprint"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": { "$ref": "#/components/schemas/UserModel" }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": { "application/json": { "schema": {} } }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}": {
+            "get": {
+                "tags": ["users"],
+                "summary": "Get User",
+                "operationId": "get_user_users__user_id__get",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": { "type": "string", "title": "User Id" }
+                    },
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [{ "type": "string" }, { "type": "null" }],
+                            "title": "Authorization"
+                        }
+                    },
+                    {
+                        "name": "fingerprint",
+                        "in": "cookie",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [{ "type": "string" }, { "type": "null" }],
+                            "title": "Fingerprint"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": { "application/json": { "schema": {} } }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": ["users"],
+                "summary": "Delete User",
+                "operationId": "delete_user_users__user_id__delete",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": { "type": "string", "title": "User Id" }
+                    },
+                    {
+                        "name": "authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [{ "type": "string" }, { "type": "null" }],
+                            "title": "Authorization"
+                        }
+                    },
+                    {
+                        "name": "fingerprint",
+                        "in": "cookie",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [{ "type": "string" }, { "type": "null" }],
+                            "title": "Fingerprint"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": { "application/json": { "schema": {} } }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/": {
+            "get": {
+                "summary": "Root",
+                "operationId": "root__get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": { "text/plain": { "schema": { "type": "string" } } }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "HTTPValidationError": {
+                "properties": {
+                    "detail": {
+                        "items": { "$ref": "#/components/schemas/ValidationError" },
+                        "type": "array",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "title": "HTTPValidationError"
+            },
+            "LoginRequestModel": {
+                "properties": {
+                    "email": { "type": "string", "format": "email", "title": "Email utente" },
+                    "password": { "type": "string", "title": "Password dell'account" }
+                },
+                "type": "object",
+                "required": ["email", "password"],
+                "title": "LoginRequestModel",
+                "description": "dati necessari alla richiesta di login"
+            },
+            "PasswordRestoreKeychain": {
+                "properties": {
+                    "key": { "type": "string", "maxLength": 64, "minLength": 64, "title": "Key" },
+                    "newpassword": { "type": "string", "title": "Newpassword" }
+                },
+                "type": "object",
+                "required": ["key", "newpassword"],
+                "title": "PasswordRestoreKeychain",
+                "description": "dati necessari alla richietta di recupero password"
+            },
+            "RegisterRequestModel": {
+                "properties": {
+                    "email": { "type": "string", "format": "email", "title": "Email utente" },
+                    "password": { "type": "string", "title": "Password dell'account" }
+                },
+                "type": "object",
+                "required": ["email", "password"],
+                "title": "RegisterRequestModel",
+                "description": "dati necessari alla richiesta di registrazione account"
+            },
+            "UserModel": {
+                "properties": {
+                    "_id": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": " Id" },
+                    "uid": { "type": "string", "title": "Uid" },
+                    "username": {
+                        "anyOf": [{ "type": "string" }, { "type": "null" }],
+                        "title": "Username"
+                    },
+                    "email": { "type": "string", "format": "email", "title": "Email" },
+                    "active": { "type": "boolean", "title": "Active", "default": false },
+                    "authorizations": {
+                        "items": { "type": "string" },
+                        "type": "array",
+                        "title": "Authorizations",
+                        "default": []
+                    },
+                    "registration_date": {
+                        "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+                        "title": "Registration Date"
+                    }
+                },
+                "type": "object",
+                "required": ["uid", "email"],
+                "title": "UserModel",
+                "description": "classe utente"
+            },
+            "ValidationError": {
+                "properties": {
+                    "loc": {
+                        "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
+                        "type": "array",
+                        "title": "Location"
+                    },
+                    "msg": { "type": "string", "title": "Message" },
+                    "type": { "type": "string", "title": "Error Type" }
+                },
+                "type": "object",
+                "required": ["loc", "msg", "type"],
+                "title": "ValidationError"
+            }
+        }
+    }
+}
