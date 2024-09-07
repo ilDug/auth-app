@@ -1,7 +1,5 @@
-# from os import environ as env
+from os import environ as env
 
-AUTH_HOST = "localhost:8000"  # env["AUTH_HOST"]
-AUTH_SERVER_URL = f"http://{AUTH_HOST}/auth"
-
-AUTHENTICATION_URL = f"{AUTH_SERVER_URL}/auth/authenticate?claims=True"
+AUTH_SERVER_URL = "http://localhost:8000" if not env["AUTH_HOST"] else env["AUTH_HOST"]
+AUTHENTICATION_URL = f"{AUTH_SERVER_URL}/auth/authenticate"
 AUTHORIZATION_URL = f"{AUTH_SERVER_URL}/auth/authorize"
