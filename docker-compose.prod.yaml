@@ -1,88 +1,62 @@
-# version: "3.9"
+networks:
+    # rete di default per la comunicazione con il proxy,
+    # da instanziare solo sui containers che si espongono
+    default:
+        name: traefik_net
+        external: true
 
-# networks:
+##########################################
+secrets:
+    # password per l'utente del database
+    MONGO_USER_PW:
+        file: lib/secrets/MONGO_AUTHUSER_PW
+    # configurazione per l'invio di email
+    MAIL_CONFIG:
+        file: lib/secrets/MAIL_CONFIG
+    # certificato per la firma dei JWT
+    JWT_CERT:
+        file: lib/secrets/certs/auth.crt
+    # chiave per la firma dei JWT
+    JWT_KEY:
+        file: lib/secrets/keys/auth.key
 
-#   # rete per la comunicazione interna dei containers
-#   shop-net:
-#     name: shop-net
-  
-#   # rete di default per la comunicazione con il proxy, 
-#   # da instanziare solo sui containers che si espongono 
-#   default:
-#     name: traefik_net
-#     external: true
-
-# ##########################################
-# secrets:
-#   MONGO_ROOT_PW:
-#     file: lib/secrets/MONGO_ROOT_PW
-#   MONGO_USER_PW:
-#     file: lib/secrets/MONGO_USER_PW
-#   MAIL_CONFIG:
-#     file: lib/secrets/MAIL_CONFIG
-#   PP_CLIENTID:
-#     file: lib/secrets/PP_CLIENTID
-#   PP_SECRET:
-#     file: lib/secrets/PP_SECRET
-
-# ##########################################
-# volumes:
-#   shop-vol:
-#     name: shop-vol
+##########################################
+volumes:
+    auth-vol:
+        name: auth-vol
 
 # ##########################################
-# services:
+services:
+    backend:
+        image: ghcr.io/ildug/auth-backend:latest
+        container_name: auth-api
+        restart: unless-stopped
 
-#   db:
-#     image: mongo:7
-#     restart: unless-stopped
-#     container_name: shop-db
-#     env_file:
-#       - ./lib/environments/dev.env
-#     environment:
-#       MONGO_INITDB_ROOT_USERNAME: root
-#       MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/MONGO_ROOT_PW
-#       # MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PW:?error}
-#     networks:
-#       - shop-net
-#     volumes:
-#       - shop-vol:/data/db # il database è salvato nel volume di docker
-#       - ./db/init:/docker-entrypoint-initdb.d # esegui i file al primo avvio
-#     secrets:
-#       - MONGO_ROOT_PW
-#       - MONGO_USER_PW
+        environment:
+            HOST: "https://auth.dag.lan/api/v1" # HOST con protocollo, porta e prefix
+            TZ: Europe/Rome
+            MONGO_USER: authuser # username of mongodb
+            MONGO_DB: auth # database name
+            MONGO_HOST: mongo1.dag.lan:27017,mongo2.dag.lan:27017,mongo3.dag.lan:27017 # mongodb replica set hosts
 
+        networks:
+            - default
 
-#   api:
-#     image: ghcr.io/ildug/shop-api:latest
-#     restart: unless-stopped
-#     container_name: shop-api
-#     depends_on:
-#       - db
-#     env_file:
-#       - ./lib/environments/prod.env
-#     environment:
-#       MODE: PRODUCTION
-#       TZ: Europe/Rome
-#     networks:
-#       - shop-net
-#       - default
-#     volumes:
-#       - ./api:/app
-#       - ./lib/assets:/app/assets
-#       - /etc/timezone:/etc/timezone:ro
-#       - /etc/localtime:/etc/localtime:ro
-#     secrets:
-#       - MONGO_USER_PW
-#       - MAIL_CONFIG
-#       - PP_CLIENTID
-#       - PP_SECRET
-#     # labels:
-#     #   - "traefik.enable=true"
-#     #   - "traefik.http.routers.shopapi.rule=Host(`posterbook.it`) && PathPrefix(`/api`) "
-#     #   - "traefik.http.routers.shopapi.entrypoints=websecure"
-#     #   - "traefik.http.routers.shopapi.tls=true"
-#     #   - "traefik.http.routers.shopapi.tls.certresolver=le"
-#     #   - "traefik.http.routers.shopapi.middlewares=api_stripprefix@docker"
-#     #   - "traefik.http.middlewares.shopapi-stripprefix.stripprefix.prefixes=/api" 
-#     # network_mode: "bridge"
+        volumes:
+            - /etc/timezone:/etc/timezone:ro
+            - /etc/localtime:/etc/localtime:ro
+
+        secrets:
+            - MAIL_CONFIG
+            - MONGO_USER_PW
+            - JWT_CERT
+            - JWT_KEY
+
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.authbackend.rule=Host(`auth.dag.lan`) && PathPrefix(`/api/v1`) "
+            - "traefik.http.routers.authbackend.entrypoints=websecure"
+            - "traefik.http.routers.authbackend.tls=true"
+            - "traefik.http.routers.authbackend.tls.certresolver=le"
+            - "traefik.http.routers.authbackend.middlewares=auth_stripprefix@docker"
+            - "traefik.http.middlewares.auth_stripprefix.stripprefix.prefixes=/api/v1"

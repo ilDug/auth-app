@@ -1,8 +1,4 @@
 networks:
-    # rete per la comunicazione interna dei containers
-    # auth-net:
-    #     name: auth-net
-
     # rete di default per la comunicazione con il proxy,
     # da instanziare solo sui containers che si espongono
     default:
@@ -11,12 +7,16 @@ networks:
 
 ##########################################
 secrets:
+    # password per l'utente del database
     MONGO_USER_PW:
         file: lib/secrets/MONGO_AUTHUSER_PW
+    # configurazione per l'invio di email
     MAIL_CONFIG:
         file: lib/secrets/MAIL_CONFIG
+    # certificato per la firma dei JWT
     JWT_CERT:
         file: lib/secrets/certs/auth.crt
+    # chiave per la firma dei JWT
     JWT_KEY:
         file: lib/secrets/keys/auth.key
 
@@ -28,9 +28,10 @@ volumes:
 ##########################################
 services:
     backend:
-        image: cr.dag.lan/auth-backend:latest
-        restart: unless-stopped
+        image: ghcr.io/ildug/auth-backend:latest
         container_name: auth-backend
+        restart: unless-stopped
+
         environment:
             MODE: PRODUCTION
             HOST: "https://auth.dag.lan/api/v1" # HOST con protocollo, porta e prefix
@@ -38,13 +39,14 @@ services:
             MONGO_USER: authuser
             MONGO_DB: auth
             MONGO_HOST: mongo1.dag.lan:27017,mongo2.dag.lan:27017,mongo3.dag.lan:27017
+
         networks:
             - default
-            # - auth-net
+
         volumes:
-            - ./lib/assets:/app/assets
             - /etc/timezone:/etc/timezone:ro
             - /etc/localtime:/etc/localtime:ro
+
         secrets:
             - MAIL_CONFIG
             - MONGO_USER_PW
