@@ -24,7 +24,7 @@ from core.email import DagMail, DagMailConfig
 class Account:
     ACTIVATION_SCOPE = "account_activation"
     USER_NAMESPACE = uuid.UUID("24198490-e89c-4771-a941-ec2137d55905")
-    ACTIVATION_LINK = f"{HOST}/api/account/activate"
+    ACTIVATION_LINK = f"{HOST}/account/activate"
 
     @classmethod
     def verify_credential_arguments(cls, email: str, password: str) -> tuple[str, str]:

@@ -27,7 +27,7 @@ class Password(Account):
     pass
 
     RECOVER_SCOPE = "recover_password"
-    RECOVER_LINK = f"{HOST}/api/account/password/restore/init"
+    RECOVER_LINK = f"{HOST}/account/password/restore/init"
 
     @classmethod
     def recover(cls, email: str) -> bool:
