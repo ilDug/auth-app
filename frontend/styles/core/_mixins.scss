@@ -1,0 +1,108 @@
+@use "sass:map";
+@use "sass:list";
+@use "breakpoints" as *;
+
+@mixin media-up($val) {
+    $min: map.get($bp, $val);
+
+    @media (min-width: $min) {
+        @content;
+    }
+}
+
+@mixin media-down($val) {
+    $max: map.get($bp, $val);
+    $max: calc($max - 0.02px);
+
+    @media (max-width: $max) {
+        @content;
+    }
+}
+
+@mixin media-only($val) {
+    $min: map.get($bp, $val);
+    $keys: map-keys($bp);
+    $i: list.index($keys, $val);
+
+    @if list.length($keys) > $i {
+        $i: $i + 1;
+        $next: list.nth($keys, $i);
+        $max: map.get($bp, $next);
+        $max: calc($max - 0.02px);
+
+        @media (min-width: $min) and (max-width: $max) {
+            @content;
+        }
+    } @else {
+        @media (min-width: $min) {
+            @content;
+        }
+    }
+}
+
+@mixin ellipsis {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+// #######################################################
+// EXAMPLE:
+//     @include bg-cover("/assets/images/faqs.png") {
+//          tutto quello che c'e all'interno viene applicato all'elemento :: BEFORE
+//          filter: sepia(1) contrast(0.7);
+//     }
+@mixin bg-cover($url) {
+    // assegna relative per garantire ABSOLUTe nel ::before
+    position: relative;
+
+    & > * {
+        // posta in primo piano tuto quello che c'è all'interno
+        position: relative;
+        z-index: 1;
+    }
+
+    &::before {
+        content: "";
+        background-image: url(#{$url});
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 0;
+        @content;
+    }
+}
+
+@mixin buttonClose {
+    --btn-close-size: 1rem;
+    --btn-close-c: white;
+    position: relative;
+    cursor: pointer;
+    width: var(--btn-close-size);
+
+    &::after,
+    &::before {
+        content: "";
+        display: inline-block;
+        position: absolute;
+        background-color: var(--btn-close-c);
+        width: 2px;
+        height: var(--btn-close-size);
+        border-radius: 2px;
+        transform-origin: center center;
+        top: 0;
+        left: 50%;
+    }
+    &::after {
+        transform: rotate(45deg);
+    }
+
+    &::before {
+        transform: rotate(-45deg);
+    }
+}
