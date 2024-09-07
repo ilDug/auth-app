@@ -2,6 +2,7 @@ lib/secrets/
 backend/lib/certs/
 backend/lib/keys/
 
+node_modules/
 
 ########################################
 # Byte-compiled / optimized / DLL files
