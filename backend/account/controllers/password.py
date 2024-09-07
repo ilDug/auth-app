@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from pymongo import MongoClient
 from core.email import DagMail, DagMailConfig
 from core.utils.string import random_string
-from models import AccountModel, AccountActionKeyModel, PasswordRestoreKeychain
+from models import AccountModel, AccountActionKeyModel
 from .account import Account
 
 from core.config import (
