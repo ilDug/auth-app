@@ -1,6 +1,5 @@
 import { computed, effect, inject, Injectable, signal } from '@angular/core';
 import { AUTH_TOKEN } from '../injection-tokens';
-import { HttpClient } from '@angular/common/http';
 import { JWT } from '../classes/jwt';
 import { NgxToastService } from '@ildug/ngx-toast';
 
