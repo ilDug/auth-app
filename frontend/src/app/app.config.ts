@@ -26,7 +26,6 @@ export const appConfig: ApplicationConfig = {
         ])),
         provideAnimationsAsync(),
         { provide: AUTH_TOKEN, useValue: 'dagjwt' },
-        { provide: AUTH_SERVER, useValue: 'http://auth.dag.lan/api/v1' },
         { provide: APP_BASE_HREF, useFactory: (pl: PlatformLocation) => pl.getBaseHrefFromDOM(), deps: [PlatformLocation] },
         { provide: LOCALE_ID, useValue: 'it-IT' }
     ]
