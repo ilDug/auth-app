@@ -14,7 +14,7 @@ export const xErrorsInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, nex
                     ? error.headers.get("X-Error")
                     : error.error.error || error.error.message || error.message || error.statusText
 
-                toast.error(xError);
+                toast.error(xError, 5000);
                 return throwError(() => xError);
             })
         )
