@@ -1,8 +1,7 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { AuthService } from './auth.service';
-import { map, Observable, tap } from 'rxjs';
-import { AUTH_SERVER } from '../injection-tokens';
+import { finalize, map, Observable, tap } from 'rxjs';
 import { Md5 } from 'ts-md5';
 
 
@@ -32,8 +31,8 @@ export class AccountService {
     #http = inject(HttpClient);
     #auth = inject(AuthService);
 
-    private readonly authServer: string = inject(AUTH_SERVER);
 
+    PENDING = signal<boolean>(false);
 
 
     /**
@@ -43,11 +42,13 @@ export class AccountService {
      * @returns An Observable that emits a boolean indicating whether the login was successful.
      */
     login(email: string, password: string): Observable<boolean> {
-        return this.#http.post<LoginResponse>(`${this.authServer}/account/login`, { email, password })
+        this.PENDING.set(true);
+        return this.#http.post<LoginResponse>(`/api/v1/account/login`, { email, password })
             .pipe(
                 map(res => res.dat),
                 tap(jwt => this.#auth.jwt.set(jwt as string)),
-                map(jwt => !!jwt)
+                map(jwt => !!jwt),
+                finalize(() => this.PENDING.set(false))
             )
     }
 
@@ -60,11 +61,13 @@ export class AccountService {
      * @returns An Observable that emits a boolean indicating the success of the registration.
      */
     register(email: string, password: string): Observable<boolean> {
-        return this.#http.post<LoginResponse>(`${this.authServer}/account/register`, { email, password }, { withCredentials: true })
+        this.PENDING.set(true);
+        return this.#http.post<LoginResponse>(`/api/v1/account/register`, { email, password }, { withCredentials: true })
             .pipe(
                 map(res => res.dat),
                 tap(jwt => this.#auth.jwt.set(jwt as string)),
-                map(jwt => !!jwt)
+                map(jwt => !!jwt),
+                finalize(() => this.PENDING.set(false))
             )
     }
 
@@ -78,8 +81,12 @@ export class AccountService {
      * @returns An Observable that emits a boolean indicating whether the activation email was successfully resent.
      */
     resendActivation(email: string): Observable<boolean> {
+        this.PENDING.set(true);
         const hash = Md5.hashStr(email)
-        return this.#http.get<boolean>(`${this.authServer}/account/resend-activation/${hash}`)
+        return this.#http.get<boolean>(`/api/v1/account/resend-activation/${hash}`)
+            .pipe(
+                finalize(() => this.PENDING.set(false))
+            )
     }
 
 
@@ -90,7 +97,11 @@ export class AccountService {
      * @returns An Observable that emits a boolean indicating whether the activation was successful.
      */
     activate(activationKey: string): Observable<boolean> {
-        return this.#http.get<boolean>(`${this.authServer}/account/activate/${activationKey}`)
+        this.PENDING.set(true);
+        return this.#http.get<boolean>(`/api/v1/account/activate/${activationKey}`)
+            .pipe(
+                finalize(() => this.PENDING.set(false))
+            )
     }
 
 
@@ -101,8 +112,12 @@ export class AccountService {
      * @returns An Observable that emits a boolean indicating whether an account with the specified email address exists
      */
     emailExists(email: string): Observable<boolean> {
+        this.PENDING.set(true);
         const hash = Md5.hashStr(email)
-        return this.#http.get<boolean>(`${this.authServer}/account/exists/${hash}`)
+        return this.#http.get<boolean>(`/api/v1/account/exists/${hash}`)
+            .pipe(
+                finalize(() => this.PENDING.set(false))
+            )
     }
 
 
@@ -115,7 +130,11 @@ export class AccountService {
      * @returns An Observable that emits a boolean indicating the success of the password recovery request.
      */
     recoverPassword(email: string): Observable<boolean> {
-        return this.#http.post<boolean>(`${this.authServer}/account/password/recover`, { email: email })
+        this.PENDING.set(true);
+        return this.#http.post<boolean>(`/api/v1/account/password/recover`, { email: email })
+            .pipe(
+                finalize(() => this.PENDING.set(false))
+            )
     }
 
 
@@ -127,7 +146,11 @@ export class AccountService {
      * @returns An observable that emits a string representing the user UID.
      */
     restoreInit(restoreKey: string): Observable<string> {
-        return this.#http.get<string>(`${this.authServer}/account/password/restore/init/${restoreKey}`)
+        this.PENDING.set(true);
+        return this.#http.get<string>(`/api/v1/account/password/restore/init/${restoreKey}`)
+            .pipe(
+                finalize(() => this.PENDING.set(false))
+            )
     }
 
 
@@ -139,7 +162,11 @@ export class AccountService {
      * @returns An Observable that emits a boolean indicating whether the password restoration was successful.
      */
     restoreSet(restoreKey: string, newPassword: string): Observable<boolean> {
-        return this.#http.post<boolean>(`${this.authServer}/account/password/restore/set`, { key: restoreKey, newpassword: newPassword })
+        this.PENDING.set(true);
+        return this.#http.post<boolean>(`/api/v1/account/password/restore/set`, { key: restoreKey, newpassword: newPassword })
+            .pipe(
+                finalize(() => this.PENDING.set(false))
+            )
     }
 
 
