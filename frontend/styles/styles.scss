@@ -1,12 +1,13 @@
 @use "core";
 @use "components";
+@use "pages";
 
 // FONTAWESOME
 // @import "https://kit.fontawesome.com/0000000000000.css";
 
 /********************************************/
 body,
-app-root {
+app-root, auth-root {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
@@ -14,6 +15,7 @@ app-root {
 
 // imposta la pagina a tutta altezza per ciò che viene rappresentato nel router outlet
 router-outlet + * {
+    display: flex;
     flex: 1 0 auto;
 }
 

@@ -1,7 +1,7 @@
 lib/secrets/
 backend/lib/certs/
 backend/lib/keys/
-
+.angular/
 node_modules/
 
 ########################################
