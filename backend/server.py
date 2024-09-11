@@ -2,12 +2,11 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
-from fastapi.staticfiles import StaticFiles
 from datetime import datetime
 
 from auth import auth_router
 from core import validation_exception_handler, http_rewrite_header_handler
-from core.config import CORS, ASSETS_PATH, HOST
+from core.config import CORS, HOST
 from core.utils import fastapi_version
 
 # IMPORT ROUTERS
@@ -38,7 +37,7 @@ app.include_router(user_router)
 
 
 #  STATIC FILES
-app.mount("/assets", StaticFiles(directory=ASSETS_PATH), name="static_media")
+# app.mount("/assets", StaticFiles(directory=ASSETS_PATH), name="static_media")
 
 
 # MAIN ROUTE
