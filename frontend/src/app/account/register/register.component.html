@@ -1,5 +1,5 @@
 <div class="account-box">
-    <h1>Login</h1>
+    <h1>Registrati</h1>
     <form [formGroup]="form">
         <div class="p-5 grid-1 g-3 b-main br-12">
             <div class="field">
@@ -16,22 +16,25 @@
                 <input type="password" id="password" name="password" formControlName="password" />
                 <div dagErrors="password" class="error">
                     <div dagError="required" when="touched">Please, insert a value</div>
-                    <div dagError="minlength" when="touched">La password deve avere almeno 8 caratteri</div>
+                    <div dagError="minlength" when="touched">
+                        La password deve avere almeno 8 caratteri
+                    </div>
                 </div>
             </div>
 
+            <div class="checkbox">
+                <input type="checkbox" formControlName="terms" />
+                <span>Accetto i <a href="#">termini e condizioni</a></span>
+            </div>
+
             <div class="flex g-3 justify-end">
-                <button class="btn btn-main" (click)="login()" [disabled]="form.invalid">
+                <button class="btn btn-main" (click)="register()" [disabled]="form.invalid">
                     @if (account$.PENDING()) {
-                        <i class="fas fa-spinner fa-spin"></i> Loading
-                    } @else {
-                        Login
-                    }
+                    <i class="fas fa-spinner fa-spin"></i> Loading } @else { Registrati }
                 </button>
             </div>
-            <p class="t-sm">
-                non hai un account? <a routerLink="/account/register">Registrati</a>
-            </p>
+
+            <p class="t-sm">hai già un account? <a routerLink="/account/login">Login</a></p>
         </div>
     </form>
 </div>

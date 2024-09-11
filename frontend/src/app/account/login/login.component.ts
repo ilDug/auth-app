@@ -2,13 +2,13 @@ import { Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgxErrorsModule } from '@ildug/ngx-errors';
 import { AccountService, AuthService } from '../../services';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { filter, finalize, map, switchMap, tap } from 'rxjs';
 
 @Component({
     selector: 'auth-login',
     standalone: true,
-    imports: [NgxErrorsModule, ReactiveFormsModule],
+    imports: [NgxErrorsModule, ReactiveFormsModule, RouterLink],
     templateUrl: './login.component.html',
     styles: ``
 })
