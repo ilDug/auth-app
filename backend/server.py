@@ -46,3 +46,9 @@ async def root():
     return f"""API SERVER RUNNING on {HOST}... FASTAPI {fastapi_version()}.
 Server time: {datetime.now()} (isoformat: {datetime.now().isoformat()})
 """
+
+
+# HEALTH CHECK for load balancer
+@app.get("/health")
+async def check():
+    return True
