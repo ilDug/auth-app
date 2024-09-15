@@ -1,0 +1,7 @@
+{
+  "/api/v1": {
+    "target": "https://auth.dag.lan",
+    "secure": false, 
+    "changeOrigin": true
+  }
+}

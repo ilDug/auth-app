@@ -1,0 +1,47 @@
+@use "mixins" as *;
+@use "breakpoints" as b;
+
+@mixin containerized-grid($cols) {
+    display: grid;
+    grid-template-columns: repeat($cols, 1fr);
+}
+
+@for $c from 1 through 12 {
+    .grid-#{$c} {
+        @include containerized-grid($c);
+    }
+    .span-#{$c} {
+        grid-column: span $c;
+    }
+
+    @include media-down(sm) {
+        .grid-#{$c} {
+            display: grid;
+        }
+    }
+}
+
+@for $c from 1 through 12 {
+    @each $bp, $lim in b.$bp {
+        @include media-up($bp) {
+            .grid-#{$c}-#{$bp} {
+                @include containerized-grid($c);
+            }
+            .span-#{$c}-#{$bp} {
+                grid-column: span $c;
+            }
+        }
+
+        @include media-down($bp) {
+            .grid-#{$c}-#{$bp} {
+                display: grid;
+            }
+        }
+
+        @include media-only($bp) {
+            .span-#{$c}-#{$bp}-only {
+                grid-column: span $c;
+            }
+        }
+    }
+}
