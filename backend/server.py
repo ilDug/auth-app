@@ -6,7 +6,7 @@ from datetime import datetime
 
 from auth import auth_router
 from core import validation_exception_handler, http_rewrite_header_handler
-from core.config import CORS, HOST
+from core.config import CORS
 from core.utils import fastapi_version
 
 # IMPORT ROUTERS
@@ -43,7 +43,7 @@ app.include_router(user_router)
 # MAIN ROUTE
 @app.get("/", response_class=PlainTextResponse)
 async def root():
-    return f"""API SERVER RUNNING on {HOST}... FASTAPI {fastapi_version()}.
+    return f"""AUTH SERVER RUNNING ON FASTAPI {fastapi_version()}.
 Server time: {datetime.now()} (isoformat: {datetime.now().isoformat()})
 """
 

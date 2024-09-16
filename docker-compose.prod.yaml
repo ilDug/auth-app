@@ -33,7 +33,7 @@ services:
         restart: unless-stopped
 
         environment:
-            HOST: "https://auth.dag.lan/api/v1" # HOST con protocollo, porta e prefix
+            FRONTEND_HOST: "https://auth.dag.lan" # HOST con protocollo, porta
             TZ: Europe/Rome
             MONGO_USER: authuser # username of mongodb
             MONGO_DB: auth # database name

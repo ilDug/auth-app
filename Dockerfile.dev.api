@@ -12,7 +12,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 ENV MONGO_HOST=db:27017
 ENV MONGO_USER=auth_user
 ENV MONGO_DB=auth_db
-ENV HOST="http://localhost:8000"
+ENV FRONTEND_HOST="http://localhost:4200"
+ENV MODE="DEVELOPMENT"
 
 # Make port 8000 available to the world outside this container
 EXPOSE 8000

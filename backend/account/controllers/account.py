@@ -16,7 +16,7 @@ from core.config import (
     DB,
     MAIL_CONFIG,
     ET_USER_ACTIVATION,
-    HOST,
+    FRONTEND_HOST,
 )
 from core.email import DagMail, DagMailConfig
 
@@ -24,7 +24,7 @@ from core.email import DagMail, DagMailConfig
 class Account:
     ACTIVATION_SCOPE = "account_activation"
     USER_NAMESPACE = uuid.UUID("24198490-e89c-4771-a941-ec2137d55905")
-    ACTIVATION_LINK = f"{HOST}/account/activate"
+    ACTIVATION_LINK = f"{FRONTEND_HOST}/account/activate"
 
     @classmethod
     def verify_credential_arguments(cls, email: str, password: str) -> tuple[str, str]:

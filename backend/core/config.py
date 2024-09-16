@@ -4,7 +4,7 @@ import json
 
 ROOT = Path("/app")
 MODE = env["MODE"]
-HOST = env["HOST"]
+FRONTEND_HOST = env["FRONTEND_HOST"]
 # HOST = "https://auth.dag.lan" if MODE == "PRODUCTION" else "http://localhost:8000"
 
 
@@ -38,7 +38,7 @@ CORS = {
     "allow_origins": [
         "http://localhost:4200",
         "http://127.0.0.1:4200",
-        HOST,
+        FRONTEND_HOST,
     ],
     "allow_methods": ["OPTIONS", "POST", "PUT", "GET", "DELETE"],
     "expose_headers": [

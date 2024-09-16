@@ -15,7 +15,7 @@ from core.config import (
     MONGO_CS,
     ACTIVATION_KEY_LENGTH,
     DB,
-    HOST,
+    FRONTEND_HOST,
 )
 
 # #############################################################################################
@@ -27,7 +27,7 @@ class Password(Account):
     pass
 
     RECOVER_SCOPE = "recover_password"
-    RECOVER_LINK = f"{HOST}/account/password/restore/init"
+    RECOVER_LINK = f"{FRONTEND_HOST}/account/password/restore"
 
     @classmethod
     def recover(cls, email: str) -> bool:

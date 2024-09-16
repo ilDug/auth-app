@@ -34,7 +34,7 @@ services:
 
         environment:
             MODE: PRODUCTION
-            HOST: "https://auth.dag.lan/api/v1" # HOST con protocollo, porta e prefix
+            HOST: "https://auth.dag.lan" # HOST con protocollo, porta e prefix
             TZ: Europe/Rome
             MONGO_USER: authuser
             MONGO_DB: auth

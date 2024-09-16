@@ -37,7 +37,7 @@ services:
         container_name: auth-backend
         environment:
             MODE: DEVELOPMENT
-            HOST: "http://localhost:8000" # HOST con protocollo, porta e prefix
+            FRONTEND_HOST: "http://localhost:4200" # HOST con protocollo, porta e prefix
             TZ: Europe/Rome
             MONGO_USER: authuser
             MONGO_DB: auth
