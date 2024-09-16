@@ -112,12 +112,8 @@ export class AccountService {
      * @returns An Observable that emits a boolean indicating whether an account with the specified email address exists
      */
     emailExists(email: string): Observable<boolean> {
-        this.PENDING.set(true);
         const hash = Md5.hashStr(email)
         return this.#http.get<boolean>(`/api/v1/account/exists/${hash}`)
-            .pipe(
-                finalize(() => this.PENDING.set(false))
-            )
     }
 
 
