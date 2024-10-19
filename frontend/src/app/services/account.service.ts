@@ -1,7 +1,7 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { AuthService } from './auth.service';
-import { finalize, map, Observable, tap } from 'rxjs';
+import { catchError, finalize, map, Observable, of, tap } from 'rxjs';
 import { Md5 } from 'ts-md5';
 
 
@@ -96,10 +96,11 @@ export class AccountService {
      * @param activationKey - The activation key for the account, providec by email.
      * @returns An Observable that emits a boolean indicating whether the activation was successful.
      */
-    activate(activationKey: string): Observable<boolean> {
+    activate(activationKey: string): Observable<{ success: boolean, message: string }> {
         this.PENDING.set(true);
-        return this.#http.get<boolean>(`/api/v1/account/activate/${activationKey}`)
+        return this.#http.get<any>(`/api/v1/account/activate/${activationKey}`, { observe: 'response' })
             .pipe(
+                map(res => ({ success: res.status === 200, message: res.body as string })),
                 finalize(() => this.PENDING.set(false))
             )
     }
