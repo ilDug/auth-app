@@ -55,3 +55,25 @@ def save_keys(uid: str, keychain: UserKeyChain):
 
         if cursor.modified_count < 1:
             raise HTTPException(500, "errore salvataggio chiavi")
+
+
+def add_keys_to_all_accounts():
+    """aggiunge la coppia di chiavi crittografiche a tutti gli account utente"""
+
+    # ritrova tutti gli utenti dal database
+    with MongoClient(MONGO_CS) as c:
+        users = c[DB].accounts.find()
+
+        # per ogni utente
+        for user in users:
+            # genera la coppia di chiavi
+            keychain = generate_crypto_keys()
+
+            # aggiorna l'utente con la nuova coppia di chiavi
+            cursor = c[DB].accounts.update_one(
+                {"uid": user["uid"]},
+                {"$set": {"keychain": keychain.model_dump()}},
+            )
+
+            if cursor.modified_count < 1:
+                raise HTTPException(500, "errore salvataggio chiavi")

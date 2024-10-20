@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, Body, Path, Query, Response
 from core.config import COOKIES_SETTINGS
 from models import RegisterRequestModel, LoginRequestModel, PasswordRestoreKeychain
-from .controllers import Account, AccountActivation, Password
+from .controllers import Account, AccountActivation, Password, add_keys_to_all_accounts
 
 
 router = APIRouter(tags=["account"])
@@ -62,3 +62,9 @@ async def password_restore_init(key: Annotated[str, Path(...)]):
 @router.post("/account/password/restore/set", description="imposta la nuova password")
 async def password_restore_set(keychain: Annotated[PasswordRestoreKeychain, Body()]):
     return Password().restore_set(keychain.key, keychain.newpassword)
+
+
+# @router.get("/account/add_keys_to_all_accounts")
+# async def generate_keys():
+#     add_keys_to_all_accounts()
+#     return True
