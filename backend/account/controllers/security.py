@@ -1,10 +1,9 @@
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
+from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 from fastapi import HTTPException
 from pymongo import MongoClient
 from core.config import MONGO_CS, DB
-from models import UserKeyChain, UserKeyChain
+from models import UserKeyChain
 
 
 def generate_crypto_keys() -> UserKeyChain:

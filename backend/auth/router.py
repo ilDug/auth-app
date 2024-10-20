@@ -48,7 +48,7 @@ async def sign(
 
 
 @router.post("/auth/verify_signature")
-async def verify_signature(
+async def verify(
     signature: Annotated[SignModel, Query(description="La firma da verificare")],
     data: Annotated[str | dict, Query(description="I dati firmati")],
     authorization: Annotated[str | None, Header()] = None,

@@ -5,7 +5,7 @@ from pymongo import MongoClient
 from core.config import MONGO_CS, DB
 from models import AccountModel, SignModel
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
+from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import hashes
 
 
