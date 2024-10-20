@@ -20,6 +20,7 @@ class AccountModel(MongoModel):
     registration_date: datetime | None = None
     keychain: UserKeyChain | None = None
 
+
 class AccountActionKeyModel(MongoModel):
     """definizione della chiava usata per autorizzare le operazioni remote di un account"""
 
