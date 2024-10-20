@@ -7,6 +7,7 @@ from fastapi import HTTPException
 from pymongo import MongoClient
 from models import AccountModel, LoginResponse, AccountActionKeyModel
 from auth import JWT
+from .security import generate_crypto_keys
 
 # from core import DagMail, DagMailConfig
 from core.utils import random_string
@@ -110,6 +111,7 @@ class Account:
                         "authorizations": ["basic"],
                         "hashed_password": hashed_pw,
                         "registration_date": datetime.now(),
+                        "keychain": generate_crypto_keys().model_dump(),
                     }
                     id = c[DB].accounts.insert_one(account).inserted_id
 
