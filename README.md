@@ -51,6 +51,13 @@ Make sure to set SECRETS and ENVIROMENTAL VARIABLES for the container in the [`d
 | GET    | `/account/password/restore/init/{key}`        |                      |
 | POST   | `/account/password/restore/set`               | `{key, newpassword}` |
 
+### Digtal signature
+
+| METHOD | ENDPOINT                 | PAYLOAD                |
+| ------ | ------------------------ | ---------------------- |
+| POST   | `/auth/sign`             | `{...data}`            |
+| POST   | `/auth/verify_signature` | `{...data, signature}` |
+
 ### Remote authentication/authorization
 
 | METHOD | ENDPOINT                             | PAYLOAD                                                                                                  |
