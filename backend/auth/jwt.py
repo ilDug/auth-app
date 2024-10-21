@@ -72,7 +72,7 @@ class JWT:
         fingerprint, fingerprint_hash = self.fingerprint()
 
         payload = {
-            **user.model_dump(exclude={"hashed_password", "id"}),
+            **user.model_dump(exclude={"hashed_password", "id", "keychain"}),
             "fingerprint_hash": fingerprint_hash,
         }
 

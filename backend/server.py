@@ -4,6 +4,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from datetime import datetime
 
+#######################################################
+# o delete for upgrading
+from account.controllers import add_keys_to_all_accounts
+
+#######################################################
+
 from auth import auth_router
 from core import validation_exception_handler, http_rewrite_header_handler
 from core.config import CORS
@@ -52,3 +58,10 @@ Server time: {datetime.now()} (isoformat: {datetime.now().isoformat()})
 @app.get("/health")
 async def check():
     return True
+
+
+@app.get("/upgrade")
+async def upgrade():
+    # aggiorna gliaccount aggiungendo le chiavi mancanti
+    updated_accounts = add_keys_to_all_accounts()
+    return {"updated_accounts": updated_accounts}

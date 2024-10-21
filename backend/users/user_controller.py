@@ -41,7 +41,7 @@ class Users:
     def update(cls, user: User) -> User:
         """aggiorna un utente"""
 
-        data = user.model_dump(exclude={"id", "uid", "reristration_date"})
+        data = user.model_dump(exclude={"id", "uid", "registration_date"})
 
         with MongoClient(MONGO_CS) as c:
             cursor = c[DB].accounts.update_one(
