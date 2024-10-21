@@ -63,17 +63,24 @@ def add_keys_to_all_accounts():
     # ritrova tutti gli utenti dal database
     with MongoClient(MONGO_CS) as c:
         users = c[DB].accounts.find()
+        counter = 0
 
         # per ogni utente
         for user in users:
-            # genera la coppia di chiavi
-            keychain = generate_crypto_keys()
+            if "keychain" not in user:
+                # genera la coppia di chiavi
+                keychain = generate_crypto_keys()
 
-            # aggiorna l'utente con la nuova coppia di chiavi
-            cursor = c[DB].accounts.update_one(
-                {"uid": user["uid"]},
-                {"$set": {"keychain": keychain.model_dump()}},
-            )
+                # aggiorna l'utente con la nuova coppia di chiavi
+                cursor = c[DB].accounts.update_one(
+                    {"uid": user["uid"]},
+                    {"$set": {"keychain": keychain.model_dump()}},
+                )
 
-            if cursor.modified_count < 1:
-                raise HTTPException(500, "errore salvataggio chiavi")
+                # incrementa il contatore
+                counter += cursor.modified_count
+
+                if cursor.modified_count < 1:
+                    raise HTTPException(500, "errore salvataggio chiavi")
+
+    return counter
