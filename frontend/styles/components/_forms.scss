@@ -1,0 +1,195 @@
+select,
+input:not([type="checkbox"]),
+textarea {
+    // background-color: white;
+
+    &:focus {
+        border-color: var(--c-main-300);
+        border-width: 1px;
+        outline-color: var(--c-main-300);
+        // outline: 0;
+    }
+}
+
+.field, .checkbox {
+    --control-bg: var(--c-bg-1);
+    --control-c: inherit;
+    --control-b-r: 3px;
+    --control-b-c: var(--c-vice-700);
+    --control-b-c-focus: var(--c-main-300);
+    --control-b-w: 3px;
+    --control-line-height: 3rem;
+    --control-fs: 0.8rem;
+    --control-p: 0.3rem;
+    --control-label-mb: 0.25rem;
+    --control-checkbox-size: 1.5em;
+
+    > *:not(input) {
+        // padding: 0.5rem 0.5rem;
+    }
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    width: 100%;
+    font-size: var(--control-fs);
+    margin-bottom: 1rem;
+
+    select,
+    input:not([type="checkbox"]),
+    textarea {
+        // appearance: none;
+        display: inline-block;
+        position: relative;
+        cursor: text;
+        width: 100%;
+        color: var(--control-c);
+        height: var(--control-line-height);
+        padding: 0.25rem 1rem 0.25rem 1rem;
+        border-width: 0;
+        border-color: var(--control-b-c);
+        border-style: solid;
+
+        background-color: var(--control-bg);
+        border-radius: var(--control-b-r);
+
+        border-bottom: var(--control-b-w) solid var(--control-b-c);
+
+        &:focus {
+            // border-color: var(--control-b-c-focus);
+            // border-width: 1px;
+            // outline-color: var(--control-b-c-focus);
+            outline: 0;
+        }
+
+        &.ng-invalid.ng-touched,
+        &.invalid {
+            border-color: var(--c-error);
+        }
+    }
+
+    label {
+        display: block;
+        margin-bottom: var(--control-label-mb);
+        font-size: var(--control-fs);
+        font-weight: bold;
+        padding-left: 0.5rem;
+    }
+
+    .field-icon {
+        position: absolute;
+        right: 0;
+        margin-right: 0.5rem;
+    }
+
+    .error {
+        font-size: 0.7rem;
+        color: var(--c-error);
+    }
+
+    input + .field-icon {
+        top: 50%;
+        transform: translateY(calc(-50%));
+    }
+    label + input + .field-icon {
+        top: 50%;
+        transform: translateY(calc(-50% + (var(--control-fs) + var(--control-label-mb)) / 2));
+    }
+}
+
+.field > textarea {
+    height: auto;
+}
+
+.field > input:disabled {
+    background-color: var(--control-bg);
+    filter: hue-rotate(90deg);
+    cursor: not-allowed;
+    &::placeholder {
+        color: var(--c-gray-400);
+    }
+}
+
+// checkbox
+.checkbox {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-start;
+    align-items: center;
+    position: relative;
+    width: 100%;
+    font-size: var(--control-fs);
+    margin-bottom: 1rem;
+}
+.checkbox > input[type="checkbox"] {
+    /* Add if not using autoprefixer */
+    -webkit-appearance: none;
+    /* Remove most all native input styles */
+    appearance: none;
+    /* For iOS < 15 */
+    background-color: transparent;
+    /* Not removed via appearance */
+    margin: 0;
+
+    font: inherit;
+    color: var(--c-main);
+    width: var(--control-checkbox-size);
+    height: var(--control-checkbox-size);
+    border: 0.15em solid var(--c-gray);
+    border-radius: 0.15em;
+    transform: translateY(-0.075em);
+
+    display: grid;
+    place-content: center;
+
+    &::before {
+        content: "";
+        width: calc(var(--control-checkbox-size) * 0.65);
+        height: calc(var(--control-checkbox-size) * 0.65);
+        clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+        transform: scale(0);
+        transform-origin: bottom left;
+        transition: 120ms transform ease-in-out;
+        box-shadow: inset 1em 1em var(--c-main);
+        /* Windows High Contrast Mode */
+        background-color: CanvasText;
+    }
+
+    &:checked::before {
+        transform: scale(1);
+    }
+
+    // &:focus {
+    //     outline: max(2px, 0.15em) solid var(--c-main);
+    //     outline-offset: max(2px, 0.15em);
+    // }
+
+    &:disabled {
+        color: var(--c-gray);
+        cursor: not-allowed;
+    }
+}
+
+.search-bar {
+    display: flex;
+    flex-wrap: nowrap;
+    max-width: 500px;
+    align-items: center;
+    i[ekSuffix] {
+        transform: translateX(-2rem);
+        padding-top: 6px;
+        font-size: 1.5rem;
+    }
+    input {
+        background-color: var(--c-gray-100);
+        border: none;
+        color: var(--c-gray-600);
+        width: 100%;
+        line-height: 3rem;
+        font-size: 1.5rem;
+        border-radius: 10px;
+        padding-left: 1rem;
+    }
+}

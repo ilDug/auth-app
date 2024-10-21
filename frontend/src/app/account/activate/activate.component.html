@@ -1,0 +1,18 @@
+<div class="account-box">
+    <h1>Activate</h1>
+    @if (success) {
+    <div class="p-5 grid-1 g3 b-goal br-12 t-center">
+        <h1 class="t-goal"><i class="fa-light fa-check"></i></h1>
+        <p>
+            Your account has been <span class="t-goal">activated</span>. You can now
+            <a routerLink="/account/login">login</a>.
+        </p>
+    </div>
+    }@else {
+    <div class="p-5 grid-1 g-3 b-error br-12 t-center">
+        <h1 class="t-error"><i class="fa-light fa-times"></i></h1>
+        <p><span class="t-error">Ops</span>, something went wrong. Please, try again.</p>
+        <p class="t-error">{{ message }}</p>
+    </div>
+    }
+</div>
