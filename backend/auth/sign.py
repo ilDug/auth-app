@@ -57,15 +57,12 @@ def sign_data(uid: str, data: str | dict) -> SignModel:
         hashes.SHA256(),
     )
 
-    # format the signature as string of hexadecimal characters
-    hex_signature = bytes.fromhex(signature.hex()).decode()
-
     # return the signature
     return SignModel(
         uid=uid,
         date=payload.date,
         fingerprint=data_hash,
-        signature=hex_signature,
+        signature=signature.hex(),
     )
 
 
