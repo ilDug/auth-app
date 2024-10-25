@@ -17,7 +17,7 @@ from cryptography.exceptions import InvalidSignature
 
 
 ##########################################################
-def sign_data(uid: str, data: str | dict) -> SignModel:
+def sign_data(uid: str, data: str | dict, date: datetime = datetime.now()) -> SignModel:
     """
     Signs the provided data using the private key associated with the given user ID.
 
@@ -42,7 +42,7 @@ def sign_data(uid: str, data: str | dict) -> SignModel:
     # genera il payload da firmare
     payload = SignPayloadModel(
         uid=uid,
-        date=datetime.now(),
+        date=date,
         payload=data_str,
     )
     payload_bytes = payload.model_dump_json().encode()
