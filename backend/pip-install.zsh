@@ -11,5 +11,6 @@ pip install "fastapi[all]" \
     asyncio \
     httpx \
     requests \
+    flake8 \
     
 pip freeze > requirements.txt
