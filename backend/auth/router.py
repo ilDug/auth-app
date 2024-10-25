@@ -1,6 +1,6 @@
 from typing import Annotated
-from fastapi import Body, Cookie, APIRouter, Header, Query
-
+from fastapi import Body, Cookie, APIRouter, HTTPException, Header, Query
+from datetime import datetime
 from .auth import Auth
 from .sign import sign_data, verify_signature
 from models import DataWithSignature
@@ -52,9 +52,21 @@ async def sign(
 @router.post("/auth/verify_signature")
 async def verify(
     data: Annotated[DataWithSignature, Body(description="I dati firmati")],
+    on: Annotated[
+        str, Query(description="la data della firma, nel formato 2024-10-31")
+    ] = None,
     authorization: Annotated[str | None, Header()] = None,
     fingerprint: Annotated[str | None, Cookie()] = None,
 ):
     """i dati devono contenere almeno una proprietà signature"""
+    try:
+        date = (
+            datetime.strptime(on, "%Y-%m-%d").date()
+            if on is not None
+            else datetime.now().date()
+        )
+    except ValueError as e:
+        raise HTTPException(400, "Data non valida")
+
     claims = Auth().authenticate(authorization, fingerprint, claims=True)
-    return verify_signature(claims["uid"], data)
+    return verify_signature(claims["uid"], data, date)
