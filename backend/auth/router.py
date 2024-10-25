@@ -44,29 +44,25 @@ async def sign(
     authorization: Annotated[str | None, Header()] = None,
     fingerprint: Annotated[str | None, Cookie()] = None,
     data: Annotated[str | dict, Body(description="Dati da firmare")] = None,
+    on: Annotated[
+        str, Query(description="la data della firma, nel formato yyyy-mm-dd")
+    ] = None,
 ):
+    try:
+        date = datetime.strptime(on, "%Y-%m-%d") if on is not None else datetime.now()
+    except ValueError as e:
+        raise HTTPException(400, "Data non valida")
+
     claims = Auth().authenticate(authorization, fingerprint, claims=True)
-    return sign_data(claims["uid"], data)
+    return sign_data(claims["uid"], data, date)
 
 
 @router.post("/auth/verify_signature")
 async def verify(
     data: Annotated[DataWithSignature, Body(description="I dati firmati")],
-    on: Annotated[
-        str, Query(description="la data della firma, nel formato 2024-10-31")
-    ] = None,
     authorization: Annotated[str | None, Header()] = None,
     fingerprint: Annotated[str | None, Cookie()] = None,
 ):
     """i dati devono contenere almeno una proprietà signature"""
-    try:
-        date = (
-            datetime.strptime(on, "%Y-%m-%d").date()
-            if on is not None
-            else datetime.now().date()
-        )
-    except ValueError as e:
-        raise HTTPException(400, "Data non valida")
-
     claims = Auth().authenticate(authorization, fingerprint, claims=True)
-    return verify_signature(claims["uid"], data, date)
+    return verify_signature(claims["uid"], data)
