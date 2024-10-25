@@ -49,7 +49,7 @@ app.include_router(user_router)
 # MAIN ROUTE
 @app.get("/", response_class=PlainTextResponse)
 async def root():
-    return f"""AUTH SERVER VERSION {app.version}, 
+    return f"""AUTH SERVER VERSION {app.version},
 RUNNING ON FASTAPI {fastapi_version()}.
 Server time: {datetime.now()} (isoformat: {datetime.now().isoformat()})
 """
