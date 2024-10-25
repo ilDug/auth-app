@@ -23,7 +23,7 @@ from users import user_router
 app = FastAPI(
     title="DAG Auth service",
     description="Authentication and Authorization server",
-    version="1",
+    version="1.1.1",
     # root_path="/api/v1",
 )
 
@@ -49,7 +49,8 @@ app.include_router(user_router)
 # MAIN ROUTE
 @app.get("/", response_class=PlainTextResponse)
 async def root():
-    return f"""AUTH SERVER RUNNING ON FASTAPI {fastapi_version()}.
+    return f"""AUTH SERVER VERSION {app.version}, 
+RUNNING ON FASTAPI {fastapi_version()}.
 Server time: {datetime.now()} (isoformat: {datetime.now().isoformat()})
 """
 
