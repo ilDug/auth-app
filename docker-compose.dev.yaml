@@ -42,6 +42,8 @@ services:
             MONGO_USER: authuser
             MONGO_DB: auth
             MONGO_HOST: db:27017
+            REGISTRATION_BEHAVIOUR: "ALLOW_ANYBODY"
+
         networks:
             - auth-net
             - default
@@ -70,7 +72,7 @@ services:
             MONGO_DB: auth
             # MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PW:?error}
         ports:
-            - 27017:27017  # eliminare in PRODUCTION
+            - 27017:27017 # eliminare in PRODUCTION
         networks:
             - auth-net
         volumes:

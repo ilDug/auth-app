@@ -8,6 +8,15 @@ FRONTEND_HOST = env["FRONTEND_HOST"]
 # HOST = "https://auth.dag.lan" if MODE == "PRODUCTION" else "http://localhost:8000"
 
 
+REGISTRATION_BEHAVIOUR = env["REGISTRATION_BEHAVIOUR"]
+"""
+definisce il comportamento del sistema di registrazione
+
+se impostato su ALLOW_ANYBODY, chiunque può registrarsi direttamente dall'API
+
+se impostato su ONLY_ADMIN, solo gli admin possono creare nuovi utenti
+"""
+
 # JWT
 ###############################
 JWT_KEY = Path("/run/secrets/JWT_KEY").read_text()

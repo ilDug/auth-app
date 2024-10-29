@@ -23,7 +23,7 @@ from users import user_router
 app = FastAPI(
     title="DAG Auth service",
     description="Authentication and Authorization server",
-    version="1.1.2",
+    version="1.2.0",
     # root_path="/api/v1",
 )
 

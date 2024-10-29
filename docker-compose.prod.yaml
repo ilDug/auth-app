@@ -38,6 +38,7 @@ services:
             MONGO_USER: authuser # username of mongodb
             MONGO_DB: auth # database name
             MONGO_HOST: mongo1.dag.lan:27017,mongo2.dag.lan:27017,mongo3.dag.lan:27017 # mongodb replica set hosts
+            REGISTRATION_BEHAVIOUR: "ONLY_ADMIN"
 
         networks:
             - default

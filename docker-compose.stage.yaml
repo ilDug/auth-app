@@ -39,6 +39,7 @@ services:
             MONGO_USER: authuser
             MONGO_DB: auth
             MONGO_HOST: mongo1.dag.lan:27017,mongo2.dag.lan:27017,mongo3.dag.lan:27017
+            REGISTRATION_BEHAVIOUR: "ALLOW_ANYBODY"
 
         networks:
             - default
