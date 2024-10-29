@@ -71,3 +71,10 @@ Make sure to set SECRETS and ENVIROMENTAL VARIABLES for the container in the [`d
 | PUT    | `/users`           | _user object as json_ |
 | GET    | `/users/{user_id}` |                       |
 | DELETE | `/users/{user_id}` |                       |
+
+## REGISTRATON BEHAVIOUR
+
+Select the behaviour of registration setting the environmetal variable `REGISTRATON_BEHAVIOUR`
+
+- `ALLOW_ANYBODY`
+- `ONLY_ADMIN`

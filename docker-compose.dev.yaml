@@ -42,7 +42,7 @@ services:
             MONGO_USER: authuser
             MONGO_DB: auth
             MONGO_HOST: db:27017
-            REGISTRATION_BEHAVIOUR: "ONLY_ADMIN"
+            REGISTRATION_BEHAVIOUR: "ALLOW_ANYBODY"
 
         networks:
             - auth-net
