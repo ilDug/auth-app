@@ -21,6 +21,7 @@ ENV MONGO_USER="authsuser"
 ENV MONGO_DB="auth"
 ENV FRONTEND_HOST="http://localhost:4200"
 ENV MODE="PRODUCTION"
+ENV REGISTRATION_BEHAVIOUR="ALLOW_ANYBODY"
 
 
 # Make port 8000 available to the world outside this container

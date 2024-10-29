@@ -1,6 +1,6 @@
 from typing import Annotated, Callable
 from fastapi import Cookie, Header
-
+from core.config import REGISTRATION_BEHAVIOUR
 from .auth import Auth
 
 
@@ -62,3 +62,16 @@ async def authorization_fn(
         return auth.authorize(authorization, fingerprint, permission)
 
     return authorize_fn
+
+
+async def registration_behaviour(
+    authorization: Annotated[str | None, Header()] = None,
+    fingerprint: Annotated[str | None, Cookie()] = None,
+) -> bool:
+    match REGISTRATION_BEHAVIOUR:
+        case "ALLOW_ANYBODY":
+            return True
+        case "ONLY_ADMIN":
+            return await is_admin(authorization, fingerprint)
+        case _:
+            return True

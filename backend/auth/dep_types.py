@@ -4,6 +4,7 @@ from .dep_functions import (
     authentication_guard,
     authorization_fn,
     is_admin,
+    registration_behaviour,
 )
 
 AuthenticationGuard = Annotated[bool, Depends(authentication_guard)]

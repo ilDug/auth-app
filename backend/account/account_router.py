@@ -1,9 +1,9 @@
 from typing import Annotated
-from fastapi import APIRouter, Body, Path, Query, Response
+from fastapi import APIRouter, Body, Depends, Path, Query, Response
 from core.config import COOKIES_SETTINGS
 from models import RegisterRequestModel, LoginRequestModel, PasswordRestoreKeychain
 from .controllers import Account, AccountActivation, Password
-
+from auth import registration_behaviour, is_admin
 
 router = APIRouter(tags=["account"])
 
@@ -15,7 +15,7 @@ async def login(res: Response, user: Annotated[LoginRequestModel, Body(...)]):
     return token
 
 
-@router.post("/account/register")
+@router.post("/account/register", dependencies=[Depends(registration_behaviour)])
 async def register(
     res: Response,
     user: Annotated[RegisterRequestModel, Body(...)],
