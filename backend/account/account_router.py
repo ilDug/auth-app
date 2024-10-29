@@ -3,7 +3,7 @@ from fastapi import APIRouter, Body, Depends, Path, Query, Response
 from core.config import COOKIES_SETTINGS
 from models import RegisterRequestModel, LoginRequestModel, PasswordRestoreKeychain
 from .controllers import Account, AccountActivation, Password
-from auth import registration_behaviour, is_admin
+from auth import registration_behaviour
 
 router = APIRouter(tags=["account"])
 
