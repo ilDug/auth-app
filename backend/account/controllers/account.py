@@ -88,6 +88,9 @@ class Account:
         hashed_pw = bcrypt.hashpw(password.encode(), salt).decode()
         uid = uuid.uuid5(cls.USER_NAMESPACE, email)
 
+        # default username is the email without the domain part
+        username = email.split("@")[0]
+
         with MongoClient(MONGO_CS) as c:
             with c.start_session() as s:
                 with s.start_transaction() as t:
@@ -105,7 +108,7 @@ class Account:
                     # inserisce il nuovo utente
                     account = {
                         "uid": str(uid),
-                        "username": None,
+                        "username": username,
                         "email": email,
                         "active": False,
                         "authorizations": ["basic"],

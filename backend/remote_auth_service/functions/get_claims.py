@@ -1,7 +1,7 @@
 from typing import Annotated
 from fastapi import Header, HTTPException, Cookie
 import httpx
-from ..endpoints import AUTHENTICATION_URL
+from ..endpoints import AUTHENTICATION_URL, CA_CERT_PATH
 
 
 async def authentication_request(
@@ -11,7 +11,7 @@ async def authentication_request(
     """Request to the authentication service to get the claims of the user"""
 
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(verify=CA_CERT_PATH) as client:
             response = await client.get(
                 AUTHENTICATION_URL,
                 headers={"Authorization": authorization},

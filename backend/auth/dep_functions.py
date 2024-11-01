@@ -59,7 +59,17 @@ async def authorization_fn(
 
     async def authorize_fn(permission: str):
         auth = Auth()
-        return auth.authorize(authorization, fingerprint, permission)
+        # prima prova a vedere se è admin (ACCESSO COMPLETO A TUTTO)
+        try:
+            is_admin = auth.authorize(authorization, fingerprint, "admin")
+        except Exception:
+            is_admin = False
+        finally:
+            return (
+                True
+                if is_admin
+                else auth.authorize(authorization, fingerprint, permission)
+            )
 
     return authorize_fn
 
@@ -75,3 +85,41 @@ async def registration_behaviour(
             return await is_admin(authorization, fingerprint)
         case _:
             return True
+
+
+async def get_token_claims(
+    authorization: Annotated[str | None, Header()] = None,
+    fingerprint: Annotated[str | None, Cookie()] = None,
+) -> dict:
+    """
+    Get the claims from the token.
+    """
+
+    auth = Auth()
+    return auth.authenticate(authorization, fingerprint, claims=True)
+
+
+async def get_uid(
+    authorization: Annotated[str | None, Header()] = None,
+    fingerprint: Annotated[str | None, Cookie()] = None,
+) -> str:
+    """
+    Get the uid from the token.
+    """
+
+    auth = Auth()
+    claims = auth.authenticate(authorization, fingerprint, claims=True)
+    return claims["uid"]
+
+
+async def get_email(
+    authorization: Annotated[str | None, Header()] = None,
+    fingerprint: Annotated[str | None, Cookie()] = None,
+) -> str:
+    """
+    Get the email from the token.
+    """
+
+    auth = Auth()
+    claims = auth.authenticate(authorization, fingerprint, claims=True)
+    return claims["email"]

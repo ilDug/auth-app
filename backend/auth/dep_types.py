@@ -3,7 +3,10 @@ from fastapi import Depends
 from .dep_functions import (
     authentication_guard,
     authorization_fn,
+    get_email,
     is_admin,
+    get_token_claims,
+    get_uid,
 )
 
 AuthenticationGuard = Annotated[bool, Depends(authentication_guard)]
@@ -26,3 +29,14 @@ async def my_function_with_permission(is_authorized: AuthorizeFn):
 
 IsAdmin = Annotated[bool, Depends(is_admin)]
 """verifica che il client abbia il permesso di admin"""
+
+
+TokenClaims = Annotated[dict, Depends(get_token_claims)]
+"""restituisce i claims del token"""
+
+
+Uid = Annotated[str, Depends(get_uid)]
+"""restituisce l'uid dell'utente"""
+
+UserEmail = Annotated[str, Depends(get_email)]
+"""restituisce l'email dell'utente"""
