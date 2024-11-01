@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from pymongo import MongoClient
 from core.config import MONGO_CS, DB
-from models import UserModel as User
+from models import UserModel as User, UserUpdateModel as UserUpdate
 
 
 class Users:
@@ -41,12 +41,13 @@ class Users:
     def update(cls, user: User) -> User:
         """aggiorna un utente"""
 
-        data = user.model_dump(exclude={"id", "uid", "registration_date"})
+        # aggiorna solo i campi consentiti creando un istanza del modello UserUpdateModel
+        u = UserUpdate(**user.model_dump())
 
         with MongoClient(MONGO_CS) as c:
             cursor = c[DB].accounts.update_one(
                 {"uid": user.uid},
-                {"$set": data},
+                {"$set": u.model_dump()},
             )
 
             if not cursor:
