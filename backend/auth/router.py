@@ -34,9 +34,20 @@ async def authorization_check(
     ] = None,
     fingerprint: Annotated[str | None, Cookie()] = None,
 ):
+    # se non c'è il permesso nei parametri della richiesta, non autorizza
     if permission is None:
         return False
-    return Auth().authorize(authorization, fingerprint, permission)
+
+    auth = Auth()
+    # prima prova a vedere se è admin (ACCESSO COMPLETO A TUTTO)
+    try:
+        is_admin = auth.authorize(authorization, fingerprint, "admin")
+    except Exception:
+        is_admin = False
+    finally:
+        return (
+            True if is_admin else auth.authorize(authorization, fingerprint, permission)
+        )
 
 
 @router.post("/auth/sign")
