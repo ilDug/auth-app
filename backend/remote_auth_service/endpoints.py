@@ -1,8 +1,6 @@
 from os import environ as env
 from pathlib import Path
 import certifi
-from os import environ as env
-
 
 AUTH_SERVER_URL = "http://localhost:8000" if not env["AUTH_HOST"] else env["AUTH_HOST"]
 AUTHENTICATION_URL = f"{AUTH_SERVER_URL}/auth/authenticate"
