@@ -16,6 +16,7 @@ async def authentication_request(
                 AUTHENTICATION_URL,
                 headers={"Authorization": authorization},
                 cookies={"fingerprint": fingerprint},
+                params={"claims": "true"},
             )
             if response.status_code != 200:
                 raise HTTPException(response.status_code, response.headers["x-error"])
