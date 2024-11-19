@@ -10,6 +10,9 @@ async def authentication_request(
 ) -> dict:
     """Request to the authentication service to get the claims of the user"""
 
+    if authorization is None or fingerprint is None:
+        raise HTTPException(401, "Missing Authorization Header or Fingerprint")
+
     try:
         async with httpx.AsyncClient(verify=CA_CERT_PATH) as client:
             response = await client.get(
@@ -24,16 +27,20 @@ async def authentication_request(
 
     # deal with connection errors
     except httpx.ConnectError as e:
+        print(e)
         raise HTTPException(500, "Errore di connessione con Auth Server")
 
     # deal with timout errors
     except httpx.TimeoutException as e:
+        print(e)
         raise HTTPException(504, "Timeout: il server non risponde")
 
     # deal wiht HTTP errors
     except httpx.HTTPStatusError as e:
+        print(e)
         raise HTTPException(500, "HTTPX: Errore HTTP")
 
     # deal with Auth Errors from remote auth service
     except Exception as e:
+        print(e)
         raise HTTPException(e.status_code, e.detail)

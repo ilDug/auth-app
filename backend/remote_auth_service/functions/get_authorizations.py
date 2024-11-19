@@ -10,6 +10,9 @@ async def authorization_request(
 ) -> Callable:
     """Request to the authorization service to check if the user has the permission, and return a function to check the permission"""
 
+    if authorization is None or fingerprint is None:
+        raise HTTPException(401, "Missing Authorization Header or Fingerprint")
+
     async def authorizeFn(permission: str):
         try:
             async with httpx.AsyncClient(verify=CA_CERT_PATH) as client:
