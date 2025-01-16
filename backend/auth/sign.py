@@ -1,6 +1,5 @@
 from datetime import datetime
 import hashlib
-import json
 import pickle
 from fastapi import HTTPException
 from pymongo import MongoClient
@@ -27,7 +26,8 @@ def sign_data(
 
     Args:
         uid (str): The unique identifier of the user.
-        data (str | dict): The data to be signed. Can be a string or a dictionary.
+        data (str | dict | int | float): The data to be signed. Can be a string, dictionary, integer, or float.
+        date (datetime, optional): The date of signing. Defaults to the current date and time.
 
     Returns:
         SignModel: An object containing the user ID, the current date, the signature, and the fingerprint of the data.
@@ -75,7 +75,6 @@ def verify_signature(data: DataWithSignature) -> SignVerifyReport:
     Verifies the signature of the provided data using the public key associated with the given user ID.
 
     Args:
-        uid (str): The unique identifier of the user.
         data (DataWithSignature): An object containing the signed data and the signature.
 
     Returns:
@@ -128,7 +127,7 @@ def verify_signature(data: DataWithSignature) -> SignVerifyReport:
             hashes.SHA256(),
         )
     except InvalidSignature as e:
-        errors.append("data o firma non autentiche")
+        errors.append("data or signature not authentic")
 
     verified = len(errors) == 0
 
@@ -140,9 +139,9 @@ def verify_signature(data: DataWithSignature) -> SignVerifyReport:
         fingerprint=data_hash,
         errors=errors,
         msg=(
-            f"Documento firmato correttamente da {user.email} il {payload.date.strftime('%d/%m/%Y')}"
+            f"Document correctly signed by {user.email} on {payload.date.strftime('%d/%m/%Y')}"
             if verified
-            else f'Errori nella verifica della firma: {"; ".join(errors)}'
+            else f'Errors in signature verification: {"; ".join(errors)}'
         ),
     )
 
@@ -152,25 +151,39 @@ def verify_signature(data: DataWithSignature) -> SignVerifyReport:
 ##########################################################
 
 
-def fetch_account(uid):
+def fetch_account(uid: str) -> AccountModel:
+    """
+    Fetches the account details from the database based on the user ID.
+
+    Args:
+        uid (str): The unique identifier of the user.
+
+    Returns:
+        AccountModel: The account details of the user.
+
+    Raises:
+        HTTPException: If the user or their keys are not found.
+    """
     with MongoClient(MONGO_CS) as c:
         user = c[DB].accounts.find_one({"uid": uid})
         if user is None:
-            raise HTTPException(404, "utente non trovato")
+            raise HTTPException(404, "User not found")
 
         user = AccountModel(**user)
 
         if user.keychain is None:
-            raise HTTPException(404, "chiavi non trovate")
+            raise HTTPException(404, "Keys not found")
 
         return user
 
 
-def digest_data_for_signature(data) -> tuple[str, str]:
+def digest_data_for_signature(data: str | dict | int | float) -> tuple[str, str]:
     """
     Transforms the input data into bytes and computes its SHA-256 hash.
+
     Args:
-        data: The input data to be transformed and hashed. It can be of any type (str, dict, int, float, etc.).
+        data (str | dict | int | float): The input data to be transformed and hashed. It can be of any type (str, dict, int, float, etc.).
+
     Returns:
         tuple: A tuple containing the hex representation of the byte of the input data and its SHA-256 hash as a hexadecimal string.
     """
