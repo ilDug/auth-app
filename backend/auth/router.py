@@ -76,4 +76,4 @@ async def verify(
 ):
     """i dati devono contenere almeno una proprietà signature"""
     claims = Auth().authenticate(authorization, fingerprint, claims=True)
-    return verify_signature(claims["uid"], data)
+    return verify_signature(data)
