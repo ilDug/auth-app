@@ -3,11 +3,15 @@ from datetime import datetime
 
 
 class SignPayloadModel(BaseModel):
-    """Oggetto che rappresenta il payload da firmare"""
+    """
+    Oggetto che rappresenta il payload da firmare.
+
+    il `payload` è il contenuto da firmare, in formato hexadecimale dei bytes del contenuto.
+    """
 
     uid: str  # user id
     date: datetime = datetime.now()  # date of sign
-    payload: str
+    payload: str  # data to sign
 
 
 class SignModel(BaseModel):

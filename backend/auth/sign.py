@@ -1,5 +1,7 @@
 from datetime import datetime
 import hashlib
+import json
+import pickle
 from fastapi import HTTPException
 from pymongo import MongoClient
 from core.config import MONGO_CS, DB
@@ -17,7 +19,9 @@ from cryptography.exceptions import InvalidSignature
 
 
 ##########################################################
-def sign_data(uid: str, data: str | dict, date: datetime = datetime.now()) -> SignModel:
+def sign_data(
+    uid: str, data: str | dict | int | float, date: datetime = datetime.now()
+) -> SignModel:
     """
     Signs the provided data using the private key associated with the given user ID.
 
@@ -37,13 +41,13 @@ def sign_data(uid: str, data: str | dict, date: datetime = datetime.now()) -> Si
         password=None,
     )
 
-    data_str, data_hash = digest_data_for_signature(data)
+    data_hex, data_hash = digest_data_for_signature(data)
 
     # genera il payload da firmare
     payload = SignPayloadModel(
         uid=uid,
         date=date,
-        payload=data_str,
+        payload=data_hex,
     )
     payload_bytes = payload.model_dump_json().encode()
 
@@ -66,7 +70,7 @@ def sign_data(uid: str, data: str | dict, date: datetime = datetime.now()) -> Si
     )
 
 
-def verify_signature(uid: str, data: DataWithSignature) -> bool:
+def verify_signature(data: DataWithSignature) -> SignVerifyReport:
     """
     Verifies the signature of the provided data using the public key associated with the given user ID.
 
@@ -75,10 +79,13 @@ def verify_signature(uid: str, data: DataWithSignature) -> bool:
         data (DataWithSignature): An object containing the signed data and the signature.
 
     Returns:
-        bool: True if the signature is valid, False otherwise.
+        SignVerifyReport: An object containing the verification result and additional information.
     """
+    # estrae i dati della firma dal payload
+    signature = data.signature  # SignModel
+
     # ritrova l'utente dal database in base al uid
-    user = fetch_account(uid)
+    user = fetch_account(signature.uid)
 
     # carica la chiave pubblica dell'utente
     public_key = serialization.load_pem_public_key(
@@ -89,10 +96,7 @@ def verify_signature(uid: str, data: DataWithSignature) -> bool:
     data_raw = data.model_dump(exclude={"signature"})
 
     # calcola l'impronta dei dati
-    data_str, data_hash = digest_data_for_signature(data_raw)
-
-    # estrae la firma dal payload
-    signature = data.signature
+    data_hex, data_hash = digest_data_for_signature(data_raw)
 
     # trasforma la firma in byte
     signature_bytes = bytes.fromhex(signature.signature)
@@ -101,7 +105,7 @@ def verify_signature(uid: str, data: DataWithSignature) -> bool:
     payload = SignPayloadModel(
         uid=signature.uid,
         date=signature.date,
-        payload=data_str,
+        payload=data_hex,
     )
     payload_bytes = payload.model_dump_json().encode()
 
@@ -111,10 +115,6 @@ def verify_signature(uid: str, data: DataWithSignature) -> bool:
     # se il fingerprint non corrisponde all'hash dei dati
     if data_hash != signature.fingerprint:
         errors.append("fingerprint non corrispondente")
-
-    # se l'utente non corrisponde
-    if uid != signature.uid:
-        errors.append("utente non corrispondente")
 
     try:
         # verifica la firma
@@ -166,14 +166,26 @@ def fetch_account(uid):
         return user
 
 
-def digest_data_for_signature(data):
-    # trasforma i dati in stringa se sono un dizionario
-    _string = str(data) if isinstance(data, dict) else data
+def digest_data_for_signature(data) -> tuple[str, str]:
+    """
+    Transforms the input data into bytes and computes its SHA-256 hash.
+    Args:
+        data: The input data to be transformed and hashed. It can be of any type (str, dict, int, float, etc.).
+    Returns:
+        tuple: A tuple containing the hex representation of the byte of the input data and its SHA-256 hash as a hexadecimal string.
+    """
 
-    # trasforma i dati in byte
-    _bytes = _string.encode()
+    # transforms the parameter `data` into bytes.
+    # please note that data can be an instance
+    # of any type : str, dict, int, float, etc.
+    if isinstance(data, (str, int, float)):
+        data_bytes = str(data).encode()
+    else:
+        data_bytes = pickle.dumps(data)
+
+    data_hex = data_bytes.hex()
 
     # calcola l'impronta dei dati
-    _hash = hashlib.sha256(_bytes).hexdigest()
+    data_hash = hashlib.sha256(data_bytes).hexdigest()
 
-    return _string, _hash
+    return data_hex, data_hash
