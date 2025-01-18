@@ -1,0 +1,11 @@
+@use "../core/mixins" as *;
+
+.account-box{
+    max-width: 500px;
+    min-width: 95vw;
+
+    @include media-up(sm){
+        min-width: 50vw;
+    }
+    
+}

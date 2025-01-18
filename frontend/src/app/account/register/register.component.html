@@ -1,0 +1,59 @@
+<div class="account-box">
+    <h1>Registrati</h1>
+    <form [formGroup]="form">
+        <div class="p-5 grid-1 g-3 b-main br-12">
+            <div class="field">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" formControlName="email" />
+                @if (form.get('email').pending) {
+                <span class="field-icon"><i class="fa-solid fa-spinner fa-spin"></i></span>
+                }@else {
+                <span class="field-icon"><i class="fa-solid fa-envelope"></i></span>  
+                }
+                <div dagErrors="email" class="error">
+                    <div dagError="required" when="touched">Please, insert a value</div>
+                    <div dagError="email" when="touched">Ops, incorrect email format</div>
+                    <div dagError="emailExists" when="touched">This email already exists</div>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" formControlName="password" />
+                <span class="field-icon"><i class="fa-solid fa-key"></i></span>
+                <div dagErrors="password" class="error">
+                    <div dagError="required" when="touched">Please, insert a value</div>
+                    <div dagError="minlength" when="touched">
+                        La password deve avere almeno 8 caratteri
+                    </div>
+                </div>
+            </div>
+
+            <div class="checkbox">
+                <input type="checkbox" formControlName="terms" />
+                <span>Accetto i <a href="#">termini e condizioni</a></span>
+            </div>
+
+            <div class="flex g-3 justify-end">
+                <button class="btn btn-main" (click)="register()" [disabled]="!form.valid">
+                    @if (account$.PENDING()) {
+                    <i class="fas fa-spinner fa-spin"></i> Loading } @else { Registrati }
+                </button>
+            </div>
+
+            <p class="t-sm">hai già un account? <a routerLink="/account/login">Login</a></p>
+        </div>
+    </form>
+
+    @if (success()) {
+    <div class="p-3 br-12 b-goal t-goal mt-3">
+        <p>
+            è stato creato un account per l'utente con email <strong> {{ auth.email() }} </strong>.
+        </p>
+        <p>
+            Per completare la registrazione, controlla la tua casella di posta elettronica e
+            conferma il tuo indirizzo email.
+        </p>
+    </div>
+    }
+</div>

@@ -1,0 +1,93 @@
+@use "sass:color";
+@use "sass:map";
+
+$c-bg: hsl(270, 2%, 20%);
+
+:root {
+    // colore di sfondo
+    --c-bg: #{$c-bg};
+
+    // colore del testo
+    --c-body: var(--c-gray-600);
+}
+
+$theme: (
+    "main": rgb(255, 91, 96),
+    "vice": hsl(266, 40%, 60%),
+    "alter": rgb(60, 67, 70),
+    "accent": rgb(162, 1, 125),
+    "error": hsl(0, 50%, 60%),
+    "warn": hsl(50, 70%, 60%),
+    "goal": hsl(100, 40%, 60%),
+    "charm": hsl(230, 55%, 60%),
+    "gray": rgb(128, 128, 128),
+);
+
+$shades: (
+    100: 80%,
+    200: 60%,
+    300: 40%,
+    400: 20%,
+    500: 0%,
+    600: -20%,
+    700: -40%,
+    800: -60%,
+    900: -80%,
+);
+
+:root {
+    // genera le custom properties dei colori con prefisso "--c-colore-tinta"
+    @each $tint, $color in $theme {
+        --c-#{$tint}: #{$color};
+
+        @each $shade, $light in $shades {
+            --c-#{$tint}-#{$shade}: #{color.scale($color, $lightness: $light)};
+        }
+    }
+
+
+    --c-bg-1:#{color.scale($c-bg, $lightness: -12%)};
+    --c-bg-2:#{color.scale($c-bg, $lightness: -8%)};
+    --c-bg-3:#{color.scale($c-bg, $lightness: -4%)};
+    --c-bg-4:#{color.scale($c-bg, $lightness: -2%)};
+    --c-bg-5:#{color.scale($c-bg, $lightness: 0%)};
+    --c-bg-6:#{color.scale($c-bg, $lightness: 2%)};
+    --c-bg-7:#{color.scale($c-bg, $lightness: 4%)};
+    --c-bg-8:#{color.scale($c-bg, $lightness: 8%)};
+    --c-bg-9:#{color.scale($c-bg, $lightness: 12%)};
+}
+
+// FUNCTIONS
+
+/// Tint a color: mix a color with white
+@function tint-color($color, $weight) {
+    @return mix(white, $color, $weight);
+}
+
+// Shade a color: mix a color with black
+@function shade-color($color, $weight) {
+    @return mix(black, $color, $weight);
+}
+
+// Shade the color if the weight is positive, else tint it
+@function shift-color($color, $weight) {
+    @return if($weight > 0, shade-color($color, $weight), tint-color($color, -$weight));
+}
+
+// ###################################
+// BACKGROUND
+@each $tint, $color in $theme {
+    .bg-#{$tint} {
+        background-color: #{$color} !important;
+    }
+
+    @each $shade, $light in $shades {
+        .bg-#{$tint}-#{$shade} {
+            background-color: #{color.scale($color, $lightness: $light)} !important;
+        }
+    }
+}
+
+.bg-white {
+    background-color: white !important;
+}
