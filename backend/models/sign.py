@@ -10,7 +10,7 @@ class SignPayloadModel(BaseModel):
     """
 
     uid: str  # user id
-    date: datetime = datetime.now()  # date of sign
+    date: str   # date of sign formatted like yyyy-mm-dd
     payload: str  # data to sign
 
 
@@ -18,7 +18,7 @@ class SignModel(BaseModel):
     """contenuto della firma"""
 
     uid: str  # user id
-    date: datetime  # date of sign
+    date: str  # date of sign formatted like yyyy-mm-dd
     fingerprint: str  # hash of the file sha256
     signature: str  # signature
 
@@ -44,7 +44,7 @@ class SignVerifyReport(BaseModel):
     """report di verifica della firma digitale"""
 
     verified: bool
-    date: datetime
+    date: str # date of sign formatted like yyyy-mm-dd
     uid: str
     user: EmailStr
     fingerprint: str
