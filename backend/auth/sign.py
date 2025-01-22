@@ -19,7 +19,7 @@ from cryptography.exceptions import InvalidSignature
 
 ##########################################################
 def sign_data(
-    uid: str, data: str | dict | int | float, date: datetime = datetime.now()
+    uid: str, data: str | dict | int | float, date: str
 ) -> SignModel:
     """
     Signs the provided data using the private key associated with the given user ID.
@@ -27,7 +27,7 @@ def sign_data(
     Args:
         uid (str): The unique identifier of the user.
         data (str | dict | int | float): The data to be signed. Can be a string, dictionary, integer, or float.
-        date (datetime, optional): The date of signing. Defaults to the current date and time.
+        date (str): The date of signing. Formatted like "yyy-mm-dd".
 
     Returns:
         SignModel: An object containing the user ID, the current date, the signature, and the fingerprint of the data.
@@ -139,12 +139,11 @@ def verify_signature(data: DataWithSignature) -> SignVerifyReport:
         fingerprint=data_hash,
         errors=errors,
         msg=(
-            f"Document correctly signed by {user.email} on {payload.date.strftime('%d/%m/%Y')}"
+            f"Document correctly signed by {user.email} on {datetime.strptime(payload.date, "%Y-%m-%d").strftime("%d/%m/%Y")}"
             if verified
             else f'Errors in signature verification: {"; ".join(errors)}'
         ),
     )
-
 
 ##########################################################
 # Helper Functions

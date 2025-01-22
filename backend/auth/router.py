@@ -60,12 +60,14 @@ async def sign(
     ] = None,
 ):
     try:
-        date = datetime.strptime(on, "%Y-%m-%d") if on is not None else datetime.now()
-    except ValueError as e:
+        #  verifica che la data sia formattata in modo corretto. 
+        #  ad ogni modo utilizza la stringa "on" per la firma
+        date = datetime.strptime(on, "%Y-%m-%d") 
+    except Exception as e:
         raise HTTPException(400, "Data non valida")
 
     claims = Auth().authenticate(authorization, fingerprint, claims=True)
-    return sign_data(claims["uid"], data, date)
+    return sign_data(claims["uid"], data, on)
 
 
 @router.post("/auth/verify_signature")
