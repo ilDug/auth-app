@@ -1,5 +1,4 @@
 from pydantic import BaseModel, ConfigDict, EmailStr
-from datetime import datetime
 
 
 class SignPayloadModel(BaseModel):
@@ -10,7 +9,7 @@ class SignPayloadModel(BaseModel):
     """
 
     uid: str  # user id
-    date: str   # date of sign formatted like yyyy-mm-dd
+    date: str  # date of sign formatted like yyyy-mm-dd
     payload: str  # data to sign
 
 
@@ -44,7 +43,7 @@ class SignVerifyReport(BaseModel):
     """report di verifica della firma digitale"""
 
     verified: bool
-    date: str # date of sign formatted like yyyy-mm-dd
+    date: str   # date of sign formatted like yyyy-mm-dd
     uid: str
     user: EmailStr
     fingerprint: str

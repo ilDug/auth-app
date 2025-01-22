@@ -18,9 +18,7 @@ from cryptography.exceptions import InvalidSignature
 
 
 ##########################################################
-def sign_data(
-    uid: str, data: str | dict | int | float, date: str
-) -> SignModel:
+def sign_data(uid: str, data: str | dict | int | float, date: str) -> SignModel:
     """
     Signs the provided data using the private key associated with the given user ID.
 
@@ -144,6 +142,7 @@ def verify_signature(data: DataWithSignature) -> SignVerifyReport:
             else f'Errors in signature verification: {"; ".join(errors)}'
         ),
     )
+
 
 ##########################################################
 # Helper Functions

@@ -60,9 +60,9 @@ async def sign(
     ] = None,
 ):
     try:
-        #  verifica che la data sia formattata in modo corretto. 
+        #  verifica che la data sia formattata in modo corretto.
         #  ad ogni modo utilizza la stringa "on" per la firma
-        date = datetime.strptime(on, "%Y-%m-%d") 
+        date = datetime.strptime(on, "%Y-%m-%d")
     except Exception as e:
         raise HTTPException(400, "Data non valida")
 
