@@ -39,6 +39,10 @@ def sign_data(uid: str, data: str | dict | int | float, date: str) -> SignModel:
         password=None,
     )
 
+    # rimuove la firma dai dati (se esiste)
+    if isinstance(data, dict) and "signature" in data:
+        data.pop("signature")
+
     data_hex, data_hash = digest_data_for_signature(data)
 
     # genera il payload da firmare

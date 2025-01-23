@@ -43,7 +43,7 @@ class SignVerifyReport(BaseModel):
     """report di verifica della firma digitale"""
 
     verified: bool
-    date: str   # date of sign formatted like yyyy-mm-dd
+    date: str  # date of sign formatted like yyyy-mm-dd
     uid: str
     user: EmailStr
     fingerprint: str
