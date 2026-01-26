@@ -14,3 +14,17 @@ dependencies = [
     "pyjwt>=2.10.1",
     "pymongo>=4.16.0",
 ]
+
+
+[tool.ruff.lint]
+ignore = [
+    "E501",
+    # line too long
+    "E266",
+    # too many leading '#' for block comment
+    "F403",
+    # 'from module import *' used; unable to detect undefined names
+    "E731",
+    # do not assign a lambda expression, use a definition   instead
+    
+]
