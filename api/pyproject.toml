@@ -11,6 +11,7 @@ dependencies = [
     "cryptography>=46.0.3",
     "fastapi[standard]>=0.128.0",
     "httpx>=0.28.1",
+    "icecream>=2.1.10",
     "pyjwt>=2.10.1",
     "pymongo>=4.16.0",
 ]
