@@ -1,9 +1,6 @@
-from datetime import datetime
 from typing import List
 from pydantic import ConfigDict, EmailStr
 from .mongo import MongoBase
-from .uuid_str import UuidStr
-
 
 # class UserModel(MongoBase):
 #     """classe utente che mostra solo le proprietà pubbliche"""
@@ -18,6 +15,7 @@ from .uuid_str import UuidStr
 #     registration_date: datetime | None = None
 
 ############# --> sostituito da AccountModel.to_public() in account.py
+
 
 class UserUpdateModel(MongoBase):
     """

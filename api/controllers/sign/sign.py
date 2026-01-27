@@ -2,7 +2,7 @@ from datetime import datetime
 import hashlib
 import pickle
 from fastapi import HTTPException
-from pymongo import MongoClient
+from pymongo import AsyncMongoClient
 from core.config import MONGO_CS, DB
 from models import (
     AccountModel,
@@ -18,7 +18,7 @@ from cryptography.exceptions import InvalidSignature
 
 
 ##########################################################
-def sign_data(uid: str, data: str | dict | int | float, date: str) -> SignModel:
+async def sign_data(uid: str, data: str | dict | int | float, date: str) -> SignModel:
     """
     Signs the provided data using the private key associated with the given user ID.
 
@@ -31,7 +31,7 @@ def sign_data(uid: str, data: str | dict | int | float, date: str) -> SignModel:
         SignModel: An object containing the user ID, the current date, the signature, and the fingerprint of the data.
     """
     # ritrova l'utente dal database in base al uid
-    user = fetch_account(uid)
+    user = await fetch_account(uid)
 
     # carica la chiave privata dell'utente
     private_key = serialization.load_pem_private_key(
@@ -72,7 +72,7 @@ def sign_data(uid: str, data: str | dict | int | float, date: str) -> SignModel:
     )
 
 
-def verify_signature(data: DataWithSignature) -> SignVerifyReport:
+async def verify_signature(data: DataWithSignature) -> SignVerifyReport:
     """
     Verifies the signature of the provided data using the public key associated with the given user ID.
 
@@ -86,7 +86,7 @@ def verify_signature(data: DataWithSignature) -> SignVerifyReport:
     signature = data.signature  # SignModel
 
     # ritrova l'utente dal database in base al uid
-    user = fetch_account(signature.uid)
+    user = await fetch_account(signature.uid)
 
     # carica la chiave pubblica dell'utente
     public_key = serialization.load_pem_public_key(
@@ -128,7 +128,7 @@ def verify_signature(data: DataWithSignature) -> SignVerifyReport:
             ),
             hashes.SHA256(),
         )
-    except InvalidSignature as e:
+    except InvalidSignature:
         errors.append("data or signature not authentic")
 
     verified = len(errors) == 0
@@ -153,7 +153,7 @@ def verify_signature(data: DataWithSignature) -> SignVerifyReport:
 ##########################################################
 
 
-def fetch_account(uid: str) -> AccountModel:
+async def fetch_account(uid: str) -> AccountModel:
     """
     Fetches the account details from the database based on the user ID.
 
@@ -166,8 +166,9 @@ def fetch_account(uid: str) -> AccountModel:
     Raises:
         HTTPException: If the user or their keys are not found.
     """
-    with MongoClient(MONGO_CS) as c:
-        user = c[DB].accounts.find_one({"uid": uid})
+    client = AsyncMongoClient(MONGO_CS)
+    try:
+        user = await client[DB].accounts.find_one({"uid": uid})
         if user is None:
             raise HTTPException(404, "User not found")
 
@@ -177,6 +178,8 @@ def fetch_account(uid: str) -> AccountModel:
             raise HTTPException(404, "Keys not found")
 
         return user
+    finally:
+        client.close()
 
 
 def digest_data_for_signature(data: str | dict | int | float) -> tuple[str, str]:

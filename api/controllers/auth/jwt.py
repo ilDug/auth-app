@@ -77,6 +77,6 @@ class JWT:
         }
 
         token: str = self.create(payload)
-        jwt: str = self.verify(token)
+        jwt: str = self.verify(token)  # noqa: F841
 
         return token, fingerprint

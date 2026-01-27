@@ -22,7 +22,7 @@ class Auth(JWT):
 
         try:
             jwt: JWTModel = self.verify(token)
-        except Exception as e:
+        except Exception:
             raise HTTPException(
                 401, "Unauthorized - il token non è valido (VERIFY ERROR)"
             )

@@ -20,12 +20,12 @@ async def sign(
     try:
         #  verifica che la data sia formattata in modo corretto.
         #  ad ogni modo utilizza la stringa "on" per la firma
-        date = datetime.strptime(on, "%Y-%m-%d")
-    except Exception as e:
+        datetime.strptime(on, "%Y-%m-%d")
+    except Exception:
         raise HTTPException(400, "Data non valida")
 
     claims = Auth().authenticate(authorization, fingerprint, claims=True)
-    return sign_data(claims["uid"], data, on)
+    return await sign_data(claims["uid"], data, on)
 
 
 @router.post("/verify_signature")
@@ -35,5 +35,5 @@ async def verify(
     fingerprint: Annotated[str | None, Cookie()] = None,
 ):
     """i dati devono contenere almeno una proprietà signature"""
-    claims = Auth().authenticate(authorization, fingerprint, claims=True)
-    return verify_signature(data)
+    Auth().authenticate(authorization, fingerprint, claims=True)
+    return await verify_signature(data)
