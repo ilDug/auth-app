@@ -141,9 +141,9 @@ async def verify_signature(data: DataWithSignature) -> SignVerifyReport:
         fingerprint=data_hash,
         errors=errors,
         msg=(
-            f"Document correctly signed by {user.email} on {datetime.strptime(payload.date, "%Y-%m-%d").strftime("%d/%m/%Y")}"
+            f"Document correctly signed by {user.email} on {datetime.strptime(payload.date, '%Y-%m-%d').strftime('%d/%m/%Y')}"
             if verified
-            else f'Errors in signature verification: {"; ".join(errors)}'
+            else f"Errors in signature verification: {'; '.join(errors)}"
         ),
     )
 

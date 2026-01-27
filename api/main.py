@@ -7,25 +7,26 @@ from datetime import datetime
 
 from core.config import CORS
 from core.middlewares import validation_exception_handler, http_rewrite_header_handler
-import logging
+from routers import auth_router, sign_router
 
 # LOGGING SETUP
 # ###########################################################
+# import logging
 from icecream import ic
 
 ic.configureOutput(includeContext=True, prefix="DAG LOG | ")
 
-log_formatter = logging.Formatter(
-    fmt="%(asctime)s - DAG - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(log_formatter)
-# file_handler = logging.FileHandler("auth-app.log")
-# file_handler.setFormatter(log_formatter)
-logger = logging.getLogger("auth-app")
-logger.setLevel(logging.WARNING)
-logger.addHandler(console_handler)
+# log_formatter = logging.Formatter(
+#     fmt="%(asctime)s - DAG - %(levelname)s - %(message)s",
+#     datefmt="%Y-%m-%d %H:%M:%S",
+# )
+# console_handler = logging.StreamHandler()
+# console_handler.setFormatter(log_formatter)
+# # file_handler = logging.FileHandler("auth-app.log")
+# # file_handler.setFormatter(log_formatter)
+# logger = logging.getLogger("auth-app")
+# logger.setLevel(logging.WARNING)
+# logger.addHandler(console_handler)
 # logger.addHandler(file_handler)
 # ###########################################################
 
@@ -49,7 +50,8 @@ app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(HTTPException, http_rewrite_header_handler)
 
 # ROUTERS
-
+app.include_router(auth_router)
+app.include_router(sign_router)
 
 #  STATIC FILES
 # app.mount("/assets", StaticFiles(directory=ASSETS_PATH), name="static_media")

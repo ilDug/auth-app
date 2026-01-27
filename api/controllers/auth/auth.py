@@ -1,5 +1,5 @@
 import hashlib
-from . import JWT
+from .jwt import JWT
 from fastapi import HTTPException
 from models import JWTModel
 
