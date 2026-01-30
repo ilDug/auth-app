@@ -10,7 +10,7 @@ router = APIRouter(tags=["account"])
 
 @router.post("/account/login")
 async def login(res: Response, user: Annotated[AccessRequestModel, Body(...)]):
-    token, fingerprint = Account().login(**user.model_dump())
+    token, fingerprint = await Account().login(**user.model_dump())
     res.set_cookie("fingerprint", fingerprint, **COOKIES_SETTINGS)
     return token
 
@@ -21,26 +21,26 @@ async def register(
     user: Annotated[AccountRegistrationModel, Body(...)],
     notify: Annotated[bool, Query()] = True,
 ):
-    token, fingerprint = Account().register(**user.model_dump(), notify=notify)
+    token, fingerprint = await Account().register(**user.model_dump(), notify=notify)
     res.set_cookie("fingerprint", fingerprint, **COOKIES_SETTINGS)
     return token
 
 
 @router.get("/account/exists/{email_md5_hash}")
 async def user_exists(email_md5_hash: Annotated[str, Path(...)]):
-    return Account().exists(email_md5_hash)
+    return await Account().exists(email_md5_hash)
 
 
 @router.get("/account/activate/{key}")
 async def activate(key: str):
-    return AccountActivation().activate(key)
+    return await AccountActivation().activate(key)
 
 
 @router.get("/account/resend-activation/{email_md5_hash}")
 async def resend(
     email_md5_hash: Annotated[str, Path(..., min_length=32, max_length=32)],
 ):
-    return AccountActivation().resend_activation_email(email_md5_hash)
+    return await AccountActivation().resend_activation_email(email_md5_hash)
 
 
 @router.post(
@@ -48,8 +48,7 @@ async def resend(
     description="genera una chiave di attivazione che permette di ripristinare la password",
 )
 async def password_recover(email: Annotated[dict, Body(...)]):
-    return Password().recover(email["email"])
-
+    return await Password().recover(email["email"])
 
 @router.get(
     "/account/password/restore/init/{key}",
