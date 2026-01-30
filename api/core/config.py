@@ -1,6 +1,7 @@
 from os import environ as env
 from pathlib import Path
 import json
+import uuid
 
 ROOT = Path("/app")
 MODE = env["MODE"] if "MODE" in env else "DEVELOPMENT"
@@ -22,6 +23,10 @@ se impostato su ALLOW_ANYBODY, chiunque può registrarsi direttamente dall'API
 
 se impostato su ONLY_ADMIN, solo gli admin possono creare nuovi utenti
 """
+
+# NAMESPACES
+###############################
+USER_NAMESPACE = uuid.UUID("24198490-e89c-4771-a941-ec2137d55905")
 
 # JWT
 ###############################

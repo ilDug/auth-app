@@ -29,7 +29,12 @@ class UserKeyChain(BaseModel):
     public_key: str  # public key
     private_key: str  # private key
 
-    model_config = ConfigDict(alias_generator=to_camel, serialize_by_alias=True)
+    model_config = ConfigDict(
+        alias_generator=to_camel,
+        serialize_by_alias=True,
+        validate_by_name=True,
+        validate_by_alias=True,
+    )
 
 
 class DataWithSignature(BaseModel):

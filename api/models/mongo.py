@@ -63,7 +63,8 @@ class MongoBase(BaseModel):
 
     model_config = ConfigDict(
         extra="allow",
-        populate_by_name=True,
+        validate_by_name=True,
+        validate_by_alias=True,
         arbitrary_types_allowed=True,
         serialize_by_alias=True,
         alias_generator=to_camel,
