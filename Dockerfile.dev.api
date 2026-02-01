@@ -3,11 +3,18 @@ FROM python:3.13
 # Set the working directory
 WORKDIR /app
 
-# Copy the backend directory contents into the container at /app
-COPY ./backend/requirements.txt ./
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy the pyproject.toml and uv.lock (if exists) for dependency installation
+COPY ./api/pyproject.toml ./
+COPY ./api/uv.lock* ./
+
+# Install dependencies using uv
+RUN uv sync --frozen --no-cache
+
+# Copy the api directory contents into the container at /app
+COPY ./api/ ./
 
 ENV MONGO_HOST=db:27017
 ENV MONGO_USER=auth_user
@@ -19,6 +26,5 @@ ENV REGISTRATION_BEHAVIOUR="ALLOW_ANYBODY"
 # Make port 8000 available to the world outside this container
 EXPOSE 8000
 
-# Run app when the container launches
-CMD [ "python", "-u", "./main.py" ]
-# la -u è per mostrare i print nel log (UNBUFFERED=1)
+# Run app in development mode with auto-reload
+CMD ["uv", "run", "fastapi", "dev", "main.py", "--host", "0.0.0.0", "--port", "8000"]
