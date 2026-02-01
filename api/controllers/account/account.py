@@ -12,7 +12,7 @@ from models import (
     AccountActionKeyModel,
     AccountRegistrationModel,
 )
-from auth import JWT
+from ..auth import JWT
 
 from core.utils import random_string
 from core.config import (
