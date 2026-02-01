@@ -1,5 +1,4 @@
 from pydantic import BaseModel, ConfigDict, EmailStr
-from pydantic.alias_generators import to_camel
 
 
 class SignPayloadModel(BaseModel):
@@ -21,20 +20,6 @@ class SignModel(BaseModel):
     date: str  # date of sign formatted like yyyy-mm-dd
     fingerprint: str  # hash of the file sha256
     signature: str  # signature
-
-
-class UserKeyChain(BaseModel):
-    """coppia di chiavi"""
-
-    public_key: str  # public key
-    private_key: str  # private key
-
-    model_config = ConfigDict(
-        alias_generator=to_camel,
-        serialize_by_alias=True,
-        validate_by_name=True,
-        validate_by_alias=True,
-    )
 
 
 class DataWithSignature(BaseModel):

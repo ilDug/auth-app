@@ -1,42 +1,8 @@
 import asyncio
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives import serialization
 from fastapi import HTTPException
 from pymongo import AsyncMongoClient
 from core.config import MONGO_CS, DB
-from models import UserKeyChain
-
-
-def generate_crypto_keys() -> UserKeyChain:
-    """genera la coppia di chiavi crittografiche"""
-
-    # generate the private key
-    private_key = rsa.generate_private_key(
-        public_exponent=65537,
-        key_size=2048,
-    )
-
-    # generate the public key
-    public_key = private_key.public_key()
-
-    # serialize the private key
-    private_pem = private_key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption(),
-    )
-
-    # serialize the public key
-    public_pem = public_key.public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo,
-    )
-
-    # return the keys as strings
-    return UserKeyChain(
-        private_key=private_pem.decode(),
-        public_key=public_pem.decode(),
-    )
+from core.utils import generate_crypto_keys, UserKeyChain
 
 
 async def save_keys(uid: str, keychain: UserKeyChain):

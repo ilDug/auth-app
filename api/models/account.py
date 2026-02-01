@@ -14,10 +14,9 @@ from pydantic.alias_generators import to_camel
 from typing import Annotated, List
 
 from core.config import ACTIVATION_KEY_LENGTH, USER_NAMESPACE
-from .sign import UserKeyChain
+from core.utils import generate_crypto_keys, UserKeyChain
 from .mongo import MongoBase
 from .uuid_str import UuidStr
-from controllers.account import generate_crypto_keys
 
 
 class AccountModel(MongoBase):
@@ -84,8 +83,7 @@ class AccountRegistrationModel(BaseModel):
         datetime | None, Field(title="data di registrazione dell'account")
     ] = datetime.now()
     keychain: Annotated[
-        UserKeyChain | None,
-        Field(title="coppia di chiavi crittografiche dell'utente"),
+        UserKeyChain | None, Field(title="coppia di chiavi crittografiche dell'utente")
     ] = generate_crypto_keys()
 
     @field_validator("email", mode="before")
