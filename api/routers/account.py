@@ -3,25 +3,24 @@ from fastapi import APIRouter, Body, Depends, Path, Query, Response
 from core.config import COOKIES_SETTINGS
 from models import AccessRequestModel, PasswordRestoreKeychain, AccountRegistrationModel
 from controllers.account import Account, AccountActivation, Password
-from controllers.auth import registration_behaviour
 
 router = APIRouter(tags=["account"])
 
 
 @router.post("/account/login")
 async def login(res: Response, user: Annotated[AccessRequestModel, Body(...)]):
-    token, fingerprint = await Account().login(**user.model_dump())
+    token, fingerprint = await Account().login(user.email, user.password)
     res.set_cookie("fingerprint", fingerprint, **COOKIES_SETTINGS)
     return token
 
 
-@router.post("/account/register", dependencies=[Depends(registration_behaviour)])
+@router.post("/account/register")
 async def register(
     res: Response,
     user: Annotated[AccountRegistrationModel, Body(...)],
     notify: Annotated[bool, Query()] = True,
 ):
-    token, fingerprint = await Account().register(**user.model_dump(), notify=notify)
+    token, fingerprint = await Account().register(user, notify=notify)
     res.set_cookie("fingerprint", fingerprint, **COOKIES_SETTINGS)
     return token
 
@@ -49,6 +48,7 @@ async def resend(
 )
 async def password_recover(email: Annotated[dict, Body(...)]):
     return await Password().recover(email["email"])
+
 
 @router.get(
     "/account/password/restore/init/{key}",

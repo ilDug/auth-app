@@ -1,17 +1,17 @@
-import uuid
 import hashlib
 import bcrypt
 import asyncio
 from string import Template
-from datetime import datetime
 from fastapi import HTTPException
 from pymongo import MongoClient, AsyncMongoClient
+from pydantic import SecretStr
 from models import (
     AccountModel,
     LoginResponse,
     AccountActionKeyModel,
     AccountRegistrationModel,
 )
+from datetime import datetime
 from ..auth import JWT
 
 from core.utils import random_string
@@ -31,7 +31,7 @@ class Account:
     ACTIVATION_LINK = f"{FRONTEND_HOST}/account/activate"
 
     @classmethod
-    async def login(cls, email: str, password: str) -> tuple[LoginResponse, str]:
+    async def login(cls, email: str, password: SecretStr) -> tuple[LoginResponse, str]:
         """si connette al server e restituisce il la LoginResponse e il fingerprint per i cookies"""
 
         async with AsyncMongoClient(MONGO_CS) as c:
@@ -48,7 +48,7 @@ class Account:
             # verifica la password in modo async (bcrypt è CPU-intensive)
             is_valid_password: bool = await asyncio.to_thread(
                 bcrypt.checkpw,
-                password.encode(),
+                password.get_secret_value().encode(),
                 user.password_hash.get_secret_value().encode(),
             )
 
@@ -57,7 +57,7 @@ class Account:
 
             # crea i tokens e gli oggetti JWT
             jwt = JWT()
-            (token, fingerprint) = jwt.generate_tokens_bundle(user)
+            (token, fingerprint) = jwt.bundle(user)
 
             return LoginResponse(dat=token), fingerprint
 
@@ -76,59 +76,69 @@ class Account:
                 "un utente con questa nome esiste gia' nel database",
             )
 
-        async with AsyncMongoClient(MONGO_CS) as c:
-            async with c.start_session() as s:
-                async with s.start_transaction() as t:
+        with MongoClient(MONGO_CS) as c:
+            with c.start_session() as s:
+                with s.start_transaction():
                     # cerca se la chiave di attivazione esiste
                     while True:
                         activation_key = random_string(ACTIVATION_KEY_LENGTH)
                         if (
-                            cursor := await c[DB].account_actions_keys.find_one(
-                                {"key": activation_key}
+                            cursor := c[DB].account_actions_keys.count_documents(
+                                {"key": activation_key}, session=s
                             )
-                            is None
+                            == 0
                         ):
                             break
 
                     # inserisce il nuovo utente
-                    id = await c[DB].accounts.insert_one(user.model_dump()).inserted_id
-
-                    if id is None:
+                    if (
+                        id := (
+                            c[DB]
+                            .accounts.insert_one(user.model_dump(), session=s)
+                            .inserted_id
+                        )
+                        is None
+                    ):
+                        s.abort_transaction()
                         raise HTTPException(500, str("errore inserimento nuovo utente"))
 
-                    # genera una chiave di attivazione e la inserisce
-                    account_action_key = AccountActionKeyModel(
-                        uid=str(user.uid),
-                        key=activation_key,
-                        created_at=datetime.now(),
-                        used_at=None,
-                        scope=cls.ACTIVATION_SCOPE,
-                    )
-                    id = (
-                        await c[DB]
-                        .account_actions_keys.insert_one(
-                            account_action_key.model_dump()
+                    try:
+                        # genera una chiave di attivazione e la inserisce
+                        account_action_key = AccountActionKeyModel(
+                            uid=str(user.uid),
+                            key=activation_key,
+                            scope=cls.ACTIVATION_SCOPE,
                         )
-                        .inserted_id
-                    )
+                    except Exception as e:
+                        s.abort_transaction()
+                        raise HTTPException(500, f"errore generazione chiave: {str(e)}")
 
-                    if id is None:
+                    if (
+                        id := (
+                            c[DB]
+                            .account_actions_keys.insert_one(
+                                account_action_key.model_dump(), session=s
+                            )
+                            .inserted_id
+                        )
+                        is None
+                    ):
+                        s.abort_transaction()
                         raise HTTPException(
                             500, "errore generazione chiave di attivazione"
                         )
 
-                    # manda la mail di attivazione
-                    if notify:
-                        if not await cls.send_activation_email(
-                            user.email, activation_key
-                        ):
-                            print(f"errore invio mail di attivazione {datetime.now()}")
-                            raise HTTPException(
-                                500,
-                                "registrazione effettuata correttamente, ma con errore invio mail di attivazione. Prova a richiedere di nuovo l'email di attivazione.",
-                            )
+                # transazione completata con successo
+                # ora manda la mail FUORI dalla transazione (non è un'operazione DB)
+                if notify:
+                    if not await cls.send_activation_email(user.email, activation_key):
+                        print(f"errore invio mail di attivazione {datetime.now()}")
+                        raise HTTPException(
+                            500,
+                            "registrazione effettuata correttamente, ma con errore invio mail di attivazione. Prova a richiedere di nuovo l'email di attivazione.",
+                        )
 
-                return await cls.login(user.email, user.password)
+        return await cls.login(user.email, user.password)
 
     @classmethod
     async def exists(cls, email_hash: str) -> bool:

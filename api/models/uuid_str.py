@@ -1,6 +1,6 @@
 from typing import Annotated
 import re
-from pydantic import AfterValidator
+from pydantic import AfterValidator, PlainSerializer
 
 
 def validate_uuid_str(uuid: str) -> str:
@@ -30,4 +30,4 @@ def validate_uuid_str(uuid: str) -> str:
 
 # This module provides a custom type `UuidStr` for validating UUID strings using Pydantic's `Annotated` and `AfterValidator`.
 # UuidStr: A custom type for UUID strings that ensures the string is a valid UUID.
-UuidStr = Annotated[str, AfterValidator(validate_uuid_str)]
+UuidStr = Annotated[str, AfterValidator(validate_uuid_str), PlainSerializer(str)]

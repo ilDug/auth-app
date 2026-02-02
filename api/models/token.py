@@ -9,6 +9,7 @@ class JWTModel(BaseModel):
         extra="allow",
         alias_generator=to_camel,
         serialize_by_alias=True,
+        validate_by_name=True,
     )
 
     nbf: datetime

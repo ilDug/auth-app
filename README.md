@@ -53,10 +53,10 @@ Make sure to set SECRETS and ENVIROMENTAL VARIABLES for the container in the [`d
 
 ### Digtal signature
 
-| METHOD | ENDPOINT                 | PAYLOAD                |
-| ------ | ------------------------ | ---------------------- |
-| POST   | `/auth/sign?on=2024-10-31`             | `{...data}`            |
-| POST   | `/auth/verify_signature` | `{...data, signature}` |
+| METHOD | ENDPOINT                   | PAYLOAD                |
+| ------ | -------------------------- | ---------------------- |
+| POST   | `/auth/sign?on=2024-10-31` | `{...data}`            |
+| POST   | `/auth/verify_signature`   | `{...data, signature}` |
 
 ### Remote authentication/authorization
 
