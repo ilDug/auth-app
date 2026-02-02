@@ -14,6 +14,7 @@ class JWT:
     CERT: str = JWT_CERT
     KEY: str = JWT_KEY
     TOKEN_LIFE = AUTH_TOKEN_LIFE
+    ALGORITHM = "RS256"
 
     def __base_payload(self, duration: int) -> dict:
         """genera il payload minimo per la creazione del token"""
@@ -29,7 +30,7 @@ class JWT:
 
         return payload
 
-    def create(self, claims: dict) -> str:
+    def token(self, claims: dict) -> str:
         """genera il token in base al payload/claims passati come argomento. Duration [ore] (24*30 = 720)"""
         try:
             payload = self.__base_payload(self.TOKEN_LIFE)
@@ -41,7 +42,7 @@ class JWT:
                     payload[key] = f"{value.isoformat()}+00:00"
 
             # crea il token (stringa)
-            token = jwt.encode(payload, self.KEY, algorithm="RS256")
+            token = jwt.encode(payload, self.KEY, algorithm=self.ALGORITHM)
             return token
 
         except Exception as e:
@@ -52,7 +53,7 @@ class JWT:
             cert_obj = load_pem_x509_certificate(self.CERT.encode())
             public_key = cert_obj.public_key()
             # private_key = cert_obj.private_key()
-            decoded = jwt.decode(token, public_key, algorithms=["RS256"])
+            decoded = jwt.decode(token, public_key, algorithms=[self.ALGORITHM])
             return JWTModel(**decoded)
 
         except Exception as e:
@@ -66,17 +67,17 @@ class JWT:
 
         return fingerprint, fingerprint_hash
 
-    def generate_tokens_bundle(self, user: AccountModel) -> tuple[str, str]:
+    def bundle(self, user: AccountModel) -> tuple[str, str]:
         """genera il token, il fingerprint"""
 
         fingerprint, fingerprint_hash = self.fingerprint()
 
         payload = {
-            **user.model_dump(exclude={"hashed_password", "id", "keychain"}),
+            **user.to_public(),
             "fingerprint_hash": fingerprint_hash,
         }
 
-        token: str = self.create(payload)
+        token: str = self.token(payload)
         jwt: str = self.verify(token)  # noqa: F841
 
         return token, fingerprint
