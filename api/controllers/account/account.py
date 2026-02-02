@@ -49,7 +49,7 @@ class Account:
             is_valid_password: bool = await asyncio.to_thread(
                 bcrypt.checkpw,
                 password.get_secret_value().encode(),
-                user.password_hash.get_secret_value().encode(),
+                user.password_hash.encode(),
             )
 
             if not is_valid_password:

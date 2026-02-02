@@ -6,8 +6,8 @@ from pydantic.alias_generators import to_camel
 class UserKeyChain(BaseModel):
     """coppia di chiavi"""
 
-    public_key: SecretStr  # public key
-    private_key: SecretStr  # private key
+    public_key: str  # public key
+    private_key: str  # private key
 
     model_config = ConfigDict(
         alias_generator=to_camel,

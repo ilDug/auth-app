@@ -27,7 +27,7 @@ class AccountModel(MongoBase):
         str,
         Field(None, title="default username is the email without the domain part"),
     ]
-    email: Annotated[EmailStr, Field(None, title="Email utente")]
+    email: Annotated[EmailStr, Field(..., title="Email utente")]
     active: Annotated[
         bool,
         Field(title="indica se l'account è attivo"),
@@ -37,14 +37,14 @@ class AccountModel(MongoBase):
         Field(title="autorizzazioni e permessi dell'account"),
     ] = []
     password_hash: Annotated[
-        SecretStr, Field(None, title="Hash SHA256 della password dell'account")
+        str, Field(None, title="Hash SHA256 della password dell'account")
     ]
     registration_date: Annotated[
         datetime, Field(title="data di registrazione dell'account")
-    ]
+    ] = datetime.now()
     keychain: Annotated[
         UserKeyChain, Field(title="coppia di chiavi crittografiche dell'utente")
-    ] = None
+    ]
 
     def to_public(self, include_id: bool = False) -> dict:
         """restituisce una rappresentazione pubblica dell'account senza dati sensibili"""
@@ -61,10 +61,9 @@ class AccountModel(MongoBase):
         return self.model_dump(include=allowed_fields)
 
 
-class AccountRegistrationModel(MongoBase):
+class AccountRegistrationModel(AccountModel):
     """modello di registrazione di un nuovo account utente"""
 
-    email: Annotated[EmailStr, Field(..., title="Email utente")]
     email_hash: Annotated[
         str,
         Field(None, title="Hash MD5 dell'email utente", exclude=True),
@@ -72,33 +71,6 @@ class AccountRegistrationModel(MongoBase):
     password: Annotated[
         SecretStr, Field(title="Password dell'account", exclude=True, min_length=8)
     ]
-    password_hash: Annotated[
-        str,
-        Field(None, title="Hash SHA256 della password dell'account"),
-    ]
-    uid: Annotated[UuidStr, Field(None, title="UUIDv5 dell'account utente")]
-    username: Annotated[
-        str,
-        Field(None, title="default username is the email without the domain part"),
-    ]
-    active: Annotated[
-        bool,
-        Field(title="indica se l'account è attivo"),
-    ] = False
-    authorizations: Annotated[
-        List[str],
-        Field(title="autorizzazioni e permessi dell'account"),
-    ] = ["basic"]
-    registration_date: Annotated[
-        datetime, Field(title="data di registrazione dell'account")
-    ] = datetime.now()
-    keychain: Annotated[
-        UserKeyChain, Field(title="coppia di chiavi crittografiche dell'utente")
-    ] = generate_crypto_keys()
-
-    # @field_validator("email", mode="before")
-    # def normalize_email(cls, value: str) -> str:
-    #     return value.lower().strip()
 
     @model_validator(mode="before")
     def initialize_account_fields(cls, data: dict) -> dict:
@@ -134,6 +106,10 @@ class AccountRegistrationModel(MongoBase):
                     data["password_hash"] = bcrypt.hashpw(
                         pwd.encode(), bcrypt.gensalt()
                     ).decode()
+
+            if "keychain" not in data or data["keychain"] is None:
+                data["keychain"] = generate_crypto_keys()
+
         return data
 
 
@@ -154,7 +130,10 @@ class AccessRequestModel(BaseModel):
     """modello di accesso all'account da parte di un utente, per LOGIN o il REGISTER"""
 
     email: Annotated[EmailStr, Field(..., title="Email utente")]
-    password: Annotated[SecretStr, Field(..., title="Password dell'account")]
+    password: Annotated[
+        SecretStr,
+        Field(..., title="Password dell'account", min_length=8),
+    ]
 
     @field_validator("email", mode="before")
     def normalize_email(cls, value: str) -> str:
