@@ -1,6 +1,5 @@
 from typing import Annotated, Callable
 from fastapi import Cookie, Header
-from core.config import REGISTRATION_BEHAVIOUR
 from .auth import Auth
 
 

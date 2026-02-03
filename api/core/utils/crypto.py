@@ -1,7 +1,8 @@
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
-from pydantic import BaseModel, ConfigDict, SecretStr
+from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
+
 
 class UserKeyChain(BaseModel):
     """coppia di chiavi"""

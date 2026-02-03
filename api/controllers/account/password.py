@@ -41,7 +41,7 @@ class Password(Account):
 
         try:
             validate_email(email)
-        except Exception as e:
+        except Exception:
             raise HTTPException(400, "indirizzo email non valido")
 
         async with AsyncMongoClient(MONGO_CS) as c:

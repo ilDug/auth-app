@@ -57,7 +57,7 @@ class Account:
 
             # crea i tokens e gli oggetti JWT
             jwt = JWT()
-            (token, fingerprint) = jwt.bundle(user)
+            token, fingerprint = jwt.bundle(user)
 
             return LoginResponse(dat=token), fingerprint
 
@@ -83,7 +83,7 @@ class Account:
                     while True:
                         activation_key = random_string(ACTIVATION_KEY_LENGTH)
                         if (
-                            cursor := c[DB].account_actions_keys.count_documents(
+                            c[DB].account_actions_keys.count_documents(
                                 {"key": activation_key}, session=s
                             )
                             == 0
@@ -92,11 +92,9 @@ class Account:
 
                     # inserisce il nuovo utente
                     if (
-                        id := (
-                            c[DB]
-                            .accounts.insert_one(user.model_dump(), session=s)
-                            .inserted_id
-                        )
+                        c[DB]
+                        .accounts.insert_one(user.model_dump(), session=s)
+                        .inserted_id
                         is None
                     ):
                         s.abort_transaction()
@@ -114,13 +112,11 @@ class Account:
                         raise HTTPException(500, f"errore generazione chiave: {str(e)}")
 
                     if (
-                        id := (
-                            c[DB]
-                            .account_actions_keys.insert_one(
-                                account_action_key.model_dump(), session=s
-                            )
-                            .inserted_id
+                        c[DB]
+                        .account_actions_keys.insert_one(
+                            account_action_key.model_dump(), session=s
                         )
+                        .inserted_id
                         is None
                     ):
                         s.abort_transaction()
