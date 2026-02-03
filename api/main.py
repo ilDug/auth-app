@@ -4,9 +4,10 @@ from fastapi.responses import PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from datetime import datetime
+from pymongo.errors import PyMongoError
 
 from core.config import CORS
-from core.middlewares import validation_exception_handler, http_rewrite_header_handler
+from core.middlewares import validation_exception_handler, http_rewrite_header_handler, mongo_error_handler
 from routers import auth_router, sign_router, account_router
 
 # LOGGING SETUP
@@ -48,6 +49,7 @@ app.add_middleware(CORSMiddleware, **CORS)
 #  EXCEPTION HANDLERS
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(HTTPException, http_rewrite_header_handler)
+app.add_exception_handler(PyMongoError, mongo_error_handler)
 
 # ROUTERS
 app.include_router(auth_router)
