@@ -1,186 +1,363 @@
-from datetime import datetime
+"""
+Sistema di Firma Digitale v2.0
+
+Implementazione migliorata con:
+- JSON invece di pickle (sicurezza)
+- Firma solo dell'hash (efficienza)
+- Timestamp precisi (audit trail)
+- Versioning del protocollo (manutenibilità)
+- Serializzazione deterministica (affidabilità)
+- Base64 per firma (standard web)
+"""
+
+from datetime import datetime, timezone
 import hashlib
-import pickle
+import json
+import base64
+from typing import Any
 from fastapi import HTTPException
-from models import (
-    AccountModel,
-    SignModel,
-    SignPayloadModel,
-    DataWithSignature,
-    SignVerifyReport,
+from models import AccountModel
+from models.sign import (
+    SignatureMetadata,
+    DigitalSignature,
+    SignedDocument,
+    SignatureVerificationResult,
 )
 from controllers.account import Account
-from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import padding
-from cryptography.hazmat.primitives import hashes
 from cryptography.exceptions import InvalidSignature
 
 
 ##########################################################
-def generate_signature(
-    data: str | dict | int | float,
-    user: AccountModel,
-    date: str,
-) -> SignModel:
+# FIRMA DIGITALE
+##########################################################
+
+
+def sign_content(content: Any, user: AccountModel) -> SignedDocument:
     """
-    Signs the provided data using the private key associated with the given user ID.
+    Firma digitalmente un contenuto usando la chiave privata dell'utente.
+
+    Vantaggi rispetto alla versione precedente:
+    - Usa JSON invece di pickle (sicuro e portabile)
+    - Serializzazione deterministica (risultati consistenti)
+    - Firma solo l'hash + metadata (efficiente)
+    - Timestamp preciso con timezone UTC
+    - Versioning del protocollo
+    - Firma in base64 (standard web)
 
     Args:
-        user (AccountModel): The authenticated user object containing user details and keychain.
-        data (str | dict | int | float): The data to be signed. Can be a string, dictionary, integer, or float.
-        date (str): The date of signing. Formatted like "yyy-mm-dd".
+        content: Contenuto da firmare (dict o str)
+        user: Utente autenticato che firma
 
     Returns:
-        SignModel: An object containing the user ID, the current date, the signature, and the fingerprint of the data.
+        SignedDocument: Documento firmato con metadata
+
+    Raises:
+        HTTPException: Se il contenuto non è serializzabile o la firma fallisce
     """
-    # carica la chiave privata dell'utente
-    private_key = serialization.load_pem_private_key(
-        user.keychain.private_key.encode(),
-        password=None,
-    )
+    # 1. Determina il tipo di contenuto e serializza in modo deterministico
+    content_type, content_bytes = _serialize_content(content)
 
-    # rimuove la firma dai dati (se esiste)
-    if isinstance(data, dict) and "signature" in data:
-        data.pop("signature")
+    # 2. Calcola l'hash SHA-256 del contenuto
+    content_hash = hashlib.sha256(content_bytes).hexdigest()
 
-    data_hex, data_hash = digest_data_for_signature(data)
-
-    # genera il payload da firmare
-    payload = SignPayloadModel(
+    # 3. Crea i metadata della firma
+    metadata = SignatureMetadata(
+        version="2.0",
+        algorithm="RSA-PSS-SHA256",
         uid=user.uid,
-        date=date,
-        payload=data_hex,
-    )
-    payload_bytes = payload.model_dump_json().encode()
-
-    # firma il payload
-    signature = private_key.sign(
-        payload_bytes,
-        padding.PSS(
-            mgf=padding.MGF1(hashes.SHA256()),
-            salt_length=padding.PSS.MAX_LENGTH,
-        ),
-        hashes.SHA256(),
+        timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        content_hash=content_hash,
+        content_type=content_type,
     )
 
-    # return the signature
-    return SignModel(
-        uid=user.uid,
-        date=payload.date,
-        fingerprint=data_hash,
-        signature=signature.hex(),
+    # 4. Serializza i metadata in modo deterministico per la firma
+    metadata_json = json.dumps(
+        metadata.model_dump(), sort_keys=True, separators=(",", ":")
     )
+    metadata_bytes = metadata_json.encode("utf-8")
 
-
-async def verify_signature(data: DataWithSignature) -> SignVerifyReport:
-    """
-    Verifies the signature of the provided data using the public key associated with the given user ID.
-
-    Args:
-        data (DataWithSignature): An object containing the signed data and the signature.
-
-    Returns:
-        SignVerifyReport: An object containing the verification result and additional information.
-    """
-    # estrae i dati della firma dal payload
-    signature = data.signature  # SignModel
-
-    # ritrova l'utente dal database in base al uid
-    user = await Account.get_user(uid=signature.uid)
-
-    # carica la chiave pubblica dell'utente
-    public_key = serialization.load_pem_public_key(
-        user.keychain.public_key.encode(),
-    )
-
-    # estrae tutti  i dati  tranne la firma dal payload
-    data_raw = data.model_dump(exclude={"signature"})
-
-    # calcola l'impronta dei dati
-    data_hex, data_hash = digest_data_for_signature(data_raw)
-
-    # trasforma la firma in byte
-    signature_bytes = bytes.fromhex(signature.signature)
-
-    # genera il payload da verificare
-    payload = SignPayloadModel(
-        uid=signature.uid,
-        date=signature.date,
-        payload=data_hex,
-    )
-    payload_bytes = payload.model_dump_json().encode()
-
-    ######## VERIFICHE ########
-    errors = []
-
-    # se il fingerprint non corrisponde all'hash dei dati
-    if data_hash != signature.fingerprint:
-        errors.append("fingerprint non corrispondente")
-
+    # 5. Carica la chiave privata dell'utente
     try:
-        # verifica la firma
-        public_key.verify(
-            signature_bytes,
-            payload_bytes,
+        private_key = serialization.load_pem_private_key(
+            user.keychain.private_key.encode(), password=None
+        )
+    except Exception as e:
+        raise HTTPException(500, f"Errore nel caricamento della chiave privata: {e}")
+
+    # 6. Firma i metadata (che includono l'hash del contenuto)
+    # Nota: firmiamo solo i metadata, non il contenuto completo (più efficiente)
+    try:
+        signature_bytes = private_key.sign(
+            metadata_bytes,
             padding.PSS(
-                mgf=padding.MGF1(hashes.SHA256()),
-                salt_length=padding.PSS.MAX_LENGTH,
+                mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH
             ),
             hashes.SHA256(),
         )
+    except Exception as e:
+        raise HTTPException(500, f"Errore durante la firma: {e}")
+
+    # 7. Converti la firma in base64 (standard per le API web)
+    signature_b64 = base64.b64encode(signature_bytes).decode("ascii")
+
+    # 8. Crea l'oggetto firma completo
+    digital_signature = DigitalSignature(metadata=metadata, signature=signature_b64)
+
+    # 9. Restituisce il documento firmato
+    return SignedDocument(content=content, signature=digital_signature)
+
+
+##########################################################
+# VERIFICA FIRMA
+##########################################################
+
+
+async def verify_signed_document(
+    document: SignedDocument,
+) -> SignatureVerificationResult:
+    """
+    Verifica la validità di un documento firmato digitalmente.
+
+    Controlli eseguiti:
+    1. Recupera l'utente dal database
+    2. Verifica che l'algoritmo sia supportato
+    3. Ricalcola l'hash del contenuto
+    4. Verifica che l'hash corrisponda (integrità)
+    5. Verifica la firma digitale (autenticità)
+    6. Controlla timestamp e altre anomalie
+
+    Args:
+        document: Documento firmato da verificare
+
+    Returns:
+        SignatureVerificationResult: Risultato dettagliato della verifica
+
+    Raises:
+        HTTPException: Se l'utente non esiste o ci sono errori critici
+    """
+    errors = []
+    warnings = []
+    content_integrity = False
+    signature_authentic = False
+
+    metadata = document.signature.metadata
+    signature_b64 = document.signature.signature
+
+    # 1. Recupera l'utente dal database
+    try:
+        user = await Account.get_user(uid=metadata.uid)
+    except HTTPException as e:
+        if e.status_code == 404:
+            errors.append(f"Signer user not found: {metadata.uid}")
+            return SignatureVerificationResult(
+                valid=False,
+                signer_uid=metadata.uid,
+                signer_email="unknown@unknown.com",
+                signed_at=metadata.timestamp,
+                algorithm=metadata.algorithm,
+                content_integrity=False,
+                signature_authentic=False,
+                errors=errors,
+            )
+        raise
+
+    # 2. Verifica la versione e l'algoritmo
+    if metadata.version != "2.0":
+        warnings.append(f"Unsupported signature version: {metadata.version}")
+
+    if metadata.algorithm != "RSA-PSS-SHA256":
+        errors.append(f"Unsupported algorithm: {metadata.algorithm}")
+        return SignatureVerificationResult(
+            valid=False,
+            signer_uid=metadata.uid,
+            signer_email=user.email,
+            signed_at=metadata.timestamp,
+            algorithm=metadata.algorithm,
+            content_integrity=False,
+            signature_authentic=False,
+            errors=errors,
+            warnings=warnings,
+        )
+
+    # 3. Ricalcola l'hash del contenuto
+    try:
+        content_type, content_bytes = _serialize_content(document.content)
+        calculated_hash = hashlib.sha256(content_bytes).hexdigest()
+    except Exception as e:
+        errors.append(f"Error serializing content: {e}")
+        return SignatureVerificationResult(
+            valid=False,
+            signer_uid=metadata.uid,
+            signer_email=user.email,
+            signed_at=metadata.timestamp,
+            algorithm=metadata.algorithm,
+            content_integrity=False,
+            signature_authentic=False,
+            errors=errors,
+            warnings=warnings,
+        )
+
+    # 4. Verifica l'integrità del contenuto (confronto hash)
+    if calculated_hash != metadata.content_hash:
+        errors.append("Content has been modified (hash mismatch)")
+    else:
+        content_integrity = True
+
+    # 5. Verifica che il tipo di contenuto corrisponda
+    if content_type != metadata.content_type:
+        warnings.append(
+            f"Content type mismatch: expected {metadata.content_type}, got {content_type}"
+        )
+
+    # 6. Carica la chiave pubblica dell'utente
+    try:
+        public_key = serialization.load_pem_public_key(
+            user.keychain.public_key.encode()
+        )
+    except Exception as e:
+        errors.append(f"Error loading public key: {e}")
+        return SignatureVerificationResult(
+            valid=False,
+            signer_uid=metadata.uid,
+            signer_email=user.email,
+            signed_at=metadata.timestamp,
+            algorithm=metadata.algorithm,
+            content_integrity=content_integrity,
+            signature_authentic=False,
+            errors=errors,
+            warnings=warnings,
+        )
+
+    # 7. Ricostruisce i metadata per la verifica
+    metadata_json = json.dumps(
+        metadata.model_dump(), sort_keys=True, separators=(",", ":")
+    )
+    metadata_bytes = metadata_json.encode("utf-8")
+
+    # 8. Decodifica la firma da base64
+    try:
+        signature_bytes = base64.b64decode(signature_b64)
+    except Exception as e:
+        errors.append(f"Invalid signature encoding: {e}")
+        return SignatureVerificationResult(
+            valid=False,
+            signer_uid=metadata.uid,
+            signer_email=user.email,
+            signed_at=metadata.timestamp,
+            algorithm=metadata.algorithm,
+            content_integrity=content_integrity,
+            signature_authentic=False,
+            errors=errors,
+            warnings=warnings,
+        )
+
+    # 9. Verifica la firma digitale
+    try:
+        public_key.verify(
+            signature_bytes,
+            metadata_bytes,
+            padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH
+            ),
+            hashes.SHA256(),
+        )
+        signature_authentic = True
     except InvalidSignature:
-        errors.append("data or signature not authentic")
+        errors.append("Signature verification failed - signature is not authentic")
+    except Exception as e:
+        errors.append(f"Error during signature verification: {e}")
 
-    verified = len(errors) == 0
+    # 10. Verifica del timestamp
+    try:
+        signed_datetime = datetime.fromisoformat(
+            metadata.timestamp.replace("Z", "+00:00")
+        )
+        now = datetime.now(timezone.utc)
 
-    return SignVerifyReport(
-        verified=verified,
-        date=payload.date,
-        uid=payload.uid,
-        user=user.email,
-        fingerprint=data_hash,
+        # Se la firma è nel futuro, è sospetta
+        if signed_datetime > now:
+            warnings.append("Signature timestamp is in the future")
+
+        # Se la firma è molto vecchia (es: >5 anni), potrebbe essere da considerare scaduta
+        age_days = (now - signed_datetime).days
+        if age_days > 1825:  # ~5 anni
+            warnings.append(f"Signature is very old ({age_days} days)")
+
+    except Exception as e:
+        warnings.append(f"Could not parse timestamp: {e}")
+
+    # 11. Determina validità complessiva
+    valid = content_integrity and signature_authentic and len(errors) == 0
+
+    return SignatureVerificationResult(
+        valid=valid,
+        signer_uid=metadata.uid,
+        signer_email=user.email,
+        signed_at=metadata.timestamp,
+        algorithm=metadata.algorithm,
+        content_integrity=content_integrity,
+        signature_authentic=signature_authentic,
         errors=errors,
-        msg=(
-            f"Document correctly signed by {user.email} on {datetime.strptime(payload.date, '%Y-%m-%d').strftime('%d/%m/%Y')}"
-            if verified
-            else f"Errors in signature verification: {'; '.join(errors)}"
-        ),
+        warnings=warnings,
     )
 
 
 ##########################################################
-# Helper Functions
+# FUNZIONI HELPER
 ##########################################################
 
 
-def digest_data_for_signature(data: str | dict | int | float) -> tuple[str, str]:
+def _serialize_content(content: Any) -> tuple[str, bytes]:
     """
-    Transforms the input data into bytes and computes its SHA-256 hash.
+    Serializza il contenuto in modo deterministico.
 
     Args:
-        data (str | dict | int | float): The input data to be transformed and hashed. It can be of any type (str, dict, int, float, etc.).
+        content: Contenuto da serializzare (dict, str, int, float, etc.)
 
     Returns:
-        tuple: A tuple containing the hex representation of the byte of the input data and its SHA-256 hash as a hexadecimal string.
+        tuple: (content_type, content_bytes)
+            - content_type: "json" o "text"
+            - content_bytes: rappresentazione in bytes del contenuto
+
+    Raises:
+        HTTPException: Se il contenuto non è serializzabile
     """
+    if isinstance(content, str):
+        # Contenuto testuale semplice
+        return ("text", content.encode("utf-8"))
 
-    # transforms the parameter `data` into bytes.
-    # please note that data can be an instance
-    # of any type : str, dict, int, float, etc.
-    match data:
-        case str() | int() | float():
-            data_bytes = str(data).encode()
+    elif isinstance(content, (dict, list, int, float, bool, type(None))):
+        # Contenuto JSON serializzabile
+        # Usa sort_keys=True per garantire ordine deterministico
+        # Usa separators compatti per rimuovere spazi inutili
+        try:
+            json_str = json.dumps(content, sort_keys=True, separators=(",", ":"))
+            return ("json", json_str.encode("utf-8"))
+        except (TypeError, ValueError) as e:
+            raise HTTPException(
+                400, f"Content is not JSON serializable: {e}"
+            )
 
-        case dict():
-            data_bytes = pickle.dumps(data)
+    else:
+        raise HTTPException(
+            400,
+            f"Unsupported content type: {type(content).__name__}. "
+            "Only str, dict, list, int, float, bool, and None are supported.",
+        )
 
-        case _:
-            raise HTTPException(400, "Tipo di dato non supportato per la firma")
 
-    # converte i bytes in una stringa esadecimale
-    data_hex = data_bytes.hex()
+def get_content_hash(content: Any) -> str:
+    """
+    Calcola l'hash SHA-256 di un contenuto senza firmarlo.
+    Utile per verifiche preliminari o confronti.
 
-    # calcola l'impronta dei dati
-    data_hash = hashlib.sha256(data_bytes).hexdigest()
+    Args:
+        content: Contenuto di cui calcolare l'hash
 
-    return data_hex, data_hash
+    Returns:
+        str: Hash SHA-256 in formato esadecimale
+    """
+    _, content_bytes = _serialize_content(content)
+    return hashlib.sha256(content_bytes).hexdigest()

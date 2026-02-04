@@ -1,93 +1,205 @@
+"""
+Router per il sistema di firma digitale v2.0
+
+Endpoints migliorati con maggiore sicurezza ed efficienza.
+"""
+
 from typing import Annotated
-from fastapi import Body, Cookie, HTTPException, Header, Query, APIRouter
-from controllers.auth import Auth, AuthenticatedUser, TokenClaims
-from controllers.sign import generate_signature, verify_signature
-from models import DataWithSignature, SignVerifyReport, SignModel
-from datetime import datetime
+from fastapi import Body, APIRouter, HTTPException
+from controllers.auth import AuthenticatedUser
+from controllers.sign.sign import sign_content, verify_signed_document
+from models.sign import SignedDocument, SignatureVerificationResult, SignRequest
 
-router = APIRouter(tags=["signature"], prefix="/api/v1/sign")
+router = APIRouter(tags=["signature"], prefix="/api/v2/sign")
 
 
-@router.post("/object", response_model=DataWithSignature)
-async def sign(
+@router.post("/", response_model=SignedDocument, summary="Firma un documento")
+async def sign_document(
     user: AuthenticatedUser,
-    data: Annotated[str | dict, Body(description="Dati da firmare")] = None,
-    on: Annotated[
-        str, Query(description="la data della firma, nel formato yyyy-mm-dd")
-    ] = None,
+    request: Annotated[SignRequest, Body(description="Contenuto da firmare")],
 ):
     """
-    Firma i dati forniti dall'utente autenticato.
-    Restituisce un oggetto contenente la firma e le informazioni correlate.
-    
-    Args:
-        user: L'utente autenticato che sta firmando i dati
-        data: I dati da firmare (str o dict)
-        on: La data della firma nel formato yyyy-mm-dd
-        
-    Returns:
-        DataWithSignature: Un oggetto contenente i dati originali e la firma digitale
-    """
-    # Verifica che i dati siano forniti
-    if data is None:
-        raise HTTPException(400, "Dati da firmare non forniti")
-    
-    # Verifica che la data sia fornita
-    if on is None:
-        raise HTTPException(400, "Data della firma non fornita")
-    
-    try:
-        # Verifica che la data sia formattata in modo corretto
-        datetime.strptime(on, "%Y-%m-%d")
-    except Exception:
-        raise HTTPException(400, "Data non valida. Formato richiesto: yyyy-mm-dd")
-    
-    # Genera la firma digitale usando la chiave privata dell'utente
-    signature = generate_signature(data=data, user=user, date=on)
-    
-    # Crea l'oggetto contenente i dati e la firma
-    result = {
-        "signature": signature.model_dump(),
+    Firma digitalmente un documento usando il sistema v2.0.
+
+    ## Miglioramenti rispetto a v1:
+    - ✅ Usa JSON invece di pickle (sicuro, portabile)
+    - ✅ Serializzazione deterministica (risultati consistenti)
+    - ✅ Firma solo l'hash (efficiente per file grandi)
+    - ✅ Timestamp preciso con timezone UTC
+    - ✅ Versioning del protocollo
+    - ✅ Firma in base64 (standard web)
+    - ✅ Struttura più pulita e standard-compliant
+
+    ## Utilizzo:
+
+    ```json
+    {
+      "content": {
+        "invoice_id": "INV-2026-001",
+        "amount": 1500.00,
+        "currency": "EUR"
+      }
     }
-    
-    # Aggiungi i dati originali all'oggetto
-    if isinstance(data, dict):
-        result.update(data)
-    else:
-        result["data"] = data
-    
-    return DataWithSignature(**result)
+    ```
+
+    ## Risposta:
+
+    ```json
+    {
+      "content": {...},
+      "signature": {
+        "metadata": {
+          "version": "2.0",
+          "algorithm": "RSA-PSS-SHA256",
+          "uid": "user-uuid",
+          "timestamp": "2026-02-04T14:30:00Z",
+          "content_hash": "abc123...",
+          "content_type": "json"
+        },
+        "signature": "MEUCIQDxG..."
+      }
+    }
+    ```
+
+    Args:
+        user: Utente autenticato (automatico tramite token)
+        request: Oggetto contenente il contenuto da firmare
+
+    Returns:
+        SignedDocument: Documento firmato con metadata completi
+
+    Raises:
+        400: Se il contenuto non è serializzabile
+        500: Se la firma fallisce
+    """
+    if request.content is None:
+        raise HTTPException(400, "Content to sign cannot be None")
+
+    return sign_content(content=request.content, user=user)
 
 
-@router.post("/verify_signature", response_model=SignVerifyReport)
-async def verify(
-    data: Annotated[DataWithSignature, Body(description="I dati firmati")],
+@router.post(
+    "/verify",
+    response_model=SignatureVerificationResult,
+    summary="Verifica una firma digitale",
+)
+async def verify_document(
+    document: Annotated[
+        SignedDocument, Body(description="Documento firmato da verificare")
+    ],
 ):
     """
-    Verifica l'autenticità di un documento firmato digitalmente.
-    
-    Questo endpoint esegue le seguenti verifiche:
-    - Valida che la firma sia autentica usando la chiave pubblica dell'utente
-    - Verifica che il contenuto dei dati non sia stato modificato (confronto fingerprint)
-    - Identifica l'utente che ha firmato il documento
-    - Verifica la data della firma
-    
+    Verifica l'autenticità e l'integrità di un documento firmato.
+
+    ## Verifiche eseguite:
+    1. ✅ Recupera l'utente firmatario dal database
+    2. ✅ Verifica supporto versione e algoritmo
+    3. ✅ Ricalcola l'hash del contenuto
+    4. ✅ Verifica integrità (hash match)
+    5. ✅ Verifica autenticità della firma (chiave pubblica)
+    6. ✅ Controlla timestamp per anomalie
+    7. ✅ Fornisce report dettagliato con errori e warning
+
+    ## Utilizzo:
+
+    ```json
+    {
+      "content": {...},
+      "signature": {
+        "metadata": {...},
+        "signature": "..."
+      }
+    }
+    ```
+
+    ## Risposta (successo):
+
+    ```json
+    {
+      "valid": true,
+      "signer_uid": "user-uuid",
+      "signer_email": "user@example.com",
+      "signed_at": "2026-02-04T14:30:00Z",
+      "algorithm": "RSA-PSS-SHA256",
+      "content_integrity": true,
+      "signature_authentic": true,
+      "errors": [],
+      "warnings": []
+    }
+    ```
+
+    ## Risposta (fallimento):
+
+    ```json
+    {
+      "valid": false,
+      "signer_uid": "user-uuid",
+      "signer_email": "user@example.com",
+      "signed_at": "2026-02-04T14:30:00Z",
+      "algorithm": "RSA-PSS-SHA256",
+      "content_integrity": false,
+      "signature_authentic": false,
+      "errors": [
+        "Content has been modified (hash mismatch)",
+        "Signature verification failed"
+      ],
+      "warnings": []
+    }
+    ```
+
     Args:
-        data: Un oggetto DataWithSignature contenente i dati e la firma da verificare
-        
+        document: Documento firmato da verificare
+
     Returns:
-        SignVerifyReport: Un report dettagliato della verifica con:
-            - verified: True se tutte le verifiche hanno successo
-            - uid: L'ID dell'utente che ha firmato
-            - user: L'email dell'utente che ha firmato
-            - date: La data della firma
-            - fingerprint: L'hash SHA256 dei dati
-            - errors: Lista di eventuali errori riscontrati
-            - msg: Messaggio descrittivo del risultato
+        SignatureVerificationResult: Report dettagliato della verifica
+
+    Raises:
+        500: Se ci sono errori critici nel processo di verifica
     """
-    # Verifica che l'oggetto contenga la firma
-    if not hasattr(data, 'signature') or data.signature is None:
-        raise HTTPException(400, "L'oggetto non contiene una firma valida")
-    
-    # Verifica la firma digitale
-    return await verify_signature(data)
+    return await verify_signed_document(document)
+
+
+@router.get(
+    "/info",
+    summary="Informazioni sul sistema di firma v2.0",
+    response_model=dict,
+)
+async def signature_system_info():
+    """
+    Restituisce informazioni sul sistema di firma digitale v2.0.
+
+    Include:
+    - Versione del protocollo
+    - Algoritmi supportati
+    - Miglioramenti rispetto a v1
+    - Best practices
+
+    Returns:
+        dict: Informazioni sul sistema
+    """
+    return {
+        "version": "2.0",
+        "protocol": "Custom Digital Signature (JWS-inspired)",
+        "supported_algorithms": ["RSA-PSS-SHA256"],
+        "key_size": "2048 bits",
+        "hash_algorithm": "SHA-256",
+        "encoding": "base64",
+        "timestamp_format": "ISO8601 with UTC timezone",
+        "improvements_over_v1": [
+            "Uses JSON instead of pickle (security)",
+            "Signs only hash + metadata (efficiency)",
+            "Precise timestamps with timezone",
+            "Protocol versioning",
+            "Deterministic serialization",
+            "Base64 signature (web standard)",
+            "Separate content_integrity and signature_authentic checks",
+            "Warnings for suspicious signatures",
+        ],
+        "best_practices": [
+            "Always verify signatures before trusting content",
+            "Store signed documents with their signatures",
+            "Consider signature age in your security policy",
+            "Implement key rotation policies",
+            "Log all signature operations for audit trail",
+        ],
+    }
