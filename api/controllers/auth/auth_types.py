@@ -7,7 +7,9 @@ from .auth_fn import (
     is_admin,
     get_token_claims,
     get_uid,
+    get_account,
 )
+from models import AccountModel
 
 AuthenticationGuard = Annotated[bool, Depends(authentication_guard)]
 """verifica che l'utente sia autenticato"""
@@ -29,6 +31,10 @@ async def my_function_with_permission(has_permission: AuthorizeFn):
 
 IsAdmin = Annotated[bool, Depends(is_admin)]
 """verifica che il client abbia il permesso di admin"""
+
+
+AuthenticatedUser = Annotated[AccountModel, Depends(get_account)]
+"""restituisce l'account model se autenticato"""
 
 
 TokenClaims = Annotated[dict, Depends(get_token_claims)]

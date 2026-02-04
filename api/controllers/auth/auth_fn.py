@@ -1,9 +1,10 @@
 from typing import Annotated, Callable
-from fastapi import Cookie, Header
+from fastapi import Cookie, Depends, Header
 from .auth import Auth
+from ..account import Account
 
 
-async def authentication_guard(
+def authentication_guard(
     authorization: Annotated[str | None, Header()] = None,
     fingerprint: Annotated[str | None, Cookie()] = None,
 ) -> bool:
@@ -22,7 +23,7 @@ async def authentication_guard(
     return claims is not None
 
 
-async def is_admin(
+def is_admin(
     authorization: Annotated[str | None, Header()] = None,
     fingerprint: Annotated[str | None, Cookie()] = None,
 ) -> bool:
@@ -41,7 +42,7 @@ async def is_admin(
     return auth.authorize(authorization, fingerprint, "admin")
 
 
-async def authorization_fn(
+def authorization_fn(
     authorization: Annotated[str | None, Header()] = None,
     fingerprint: Annotated[str | None, Cookie()] = None,
 ) -> Callable:
@@ -56,7 +57,7 @@ async def authorization_fn(
         Callable: A function that takes a permission string and returns the result of the authorization check.
     """
 
-    async def has_permission(permission: str):
+    def has_permission(permission: str):
         auth = Auth()
         # prima prova a vedere se è admin (ACCESSO COMPLETO A TUTTO)
         try:
@@ -73,7 +74,7 @@ async def authorization_fn(
     return has_permission
 
 
-async def get_token_claims(
+def get_token_claims(
     authorization: Annotated[str | None, Header()] = None,
     fingerprint: Annotated[str | None, Cookie()] = None,
 ) -> dict:
@@ -85,27 +86,23 @@ async def get_token_claims(
     return auth.authenticate(authorization, fingerprint, claims=True)
 
 
-async def get_uid(
-    authorization: Annotated[str | None, Header()] = None,
-    fingerprint: Annotated[str | None, Cookie()] = None,
-) -> str:
+async def get_uid(claims: Annotated[dict, Depends(get_token_claims)]) -> str:
     """
     Get the uid from the token.
     """
-
-    auth = Auth()
-    claims = auth.authenticate(authorization, fingerprint, claims=True)
     return claims["uid"]
 
 
-async def get_email(
-    authorization: Annotated[str | None, Header()] = None,
-    fingerprint: Annotated[str | None, Cookie()] = None,
-) -> str:
+async def get_email(claims: Annotated[dict, Depends(get_token_claims)]) -> str:
     """
     Get the email from the token.
     """
-
-    auth = Auth()
-    claims = auth.authenticate(authorization, fingerprint, claims=True)
     return claims["email"]
+
+
+async def get_account(uid: Annotated[str, Depends(get_uid)]) -> Account:
+    """
+    Get the authenticated account.
+    """
+    account = await Account.get_user(uid=uid)
+    return account

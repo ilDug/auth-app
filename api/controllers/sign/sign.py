@@ -2,8 +2,6 @@ from datetime import datetime
 import hashlib
 import pickle
 from fastapi import HTTPException
-from pymongo import AsyncMongoClient
-from core.config import MONGO_CS, DB
 from models import (
     AccountModel,
     SignModel,
@@ -11,6 +9,7 @@ from models import (
     DataWithSignature,
     SignVerifyReport,
 )
+from controllers.account import Account
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import hashes
@@ -18,21 +17,22 @@ from cryptography.exceptions import InvalidSignature
 
 
 ##########################################################
-async def sign_data(uid: str, data: str | dict | int | float, date: str) -> SignModel:
+def generate_signature(
+    data: str | dict | int | float,
+    user: AccountModel,
+    date: str,
+) -> SignModel:
     """
     Signs the provided data using the private key associated with the given user ID.
 
     Args:
-        uid (str): The unique identifier of the user.
+        user (AccountModel): The authenticated user object containing user details and keychain.
         data (str | dict | int | float): The data to be signed. Can be a string, dictionary, integer, or float.
         date (str): The date of signing. Formatted like "yyy-mm-dd".
 
     Returns:
         SignModel: An object containing the user ID, the current date, the signature, and the fingerprint of the data.
     """
-    # ritrova l'utente dal database in base al uid
-    user = await fetch_account(uid)
-
     # carica la chiave privata dell'utente
     private_key = serialization.load_pem_private_key(
         user.keychain.private_key.encode(),
@@ -47,7 +47,7 @@ async def sign_data(uid: str, data: str | dict | int | float, date: str) -> Sign
 
     # genera il payload da firmare
     payload = SignPayloadModel(
-        uid=uid,
+        uid=user.uid,
         date=date,
         payload=data_hex,
     )
@@ -65,7 +65,7 @@ async def sign_data(uid: str, data: str | dict | int | float, date: str) -> Sign
 
     # return the signature
     return SignModel(
-        uid=uid,
+        uid=user.uid,
         date=payload.date,
         fingerprint=data_hash,
         signature=signature.hex(),
@@ -86,7 +86,7 @@ async def verify_signature(data: DataWithSignature) -> SignVerifyReport:
     signature = data.signature  # SignModel
 
     # ritrova l'utente dal database in base al uid
-    user = await fetch_account(signature.uid)
+    user = await Account.get_user(uid=signature.uid)
 
     # carica la chiave pubblica dell'utente
     public_key = serialization.load_pem_public_key(
@@ -153,35 +153,6 @@ async def verify_signature(data: DataWithSignature) -> SignVerifyReport:
 ##########################################################
 
 
-async def fetch_account(uid: str) -> AccountModel:
-    """
-    Fetches the account details from the database based on the user ID.
-
-    Args:
-        uid (str): The unique identifier of the user.
-
-    Returns:
-        AccountModel: The account details of the user.
-
-    Raises:
-        HTTPException: If the user or their keys are not found.
-    """
-    client = AsyncMongoClient(MONGO_CS)
-    try:
-        user = await client[DB].accounts.find_one({"uid": uid})
-        if user is None:
-            raise HTTPException(404, "User not found")
-
-        user = AccountModel(**user)
-
-        if user.keychain is None:
-            raise HTTPException(404, "Keys not found")
-
-        return user
-    finally:
-        client.close()
-
-
 def digest_data_for_signature(data: str | dict | int | float) -> tuple[str, str]:
     """
     Transforms the input data into bytes and computes its SHA-256 hash.
@@ -196,11 +167,17 @@ def digest_data_for_signature(data: str | dict | int | float) -> tuple[str, str]
     # transforms the parameter `data` into bytes.
     # please note that data can be an instance
     # of any type : str, dict, int, float, etc.
-    if isinstance(data, (str, int, float)):
-        data_bytes = str(data).encode()
-    else:
-        data_bytes = pickle.dumps(data)
+    match data:
+        case str() | int() | float():
+            data_bytes = str(data).encode()
 
+        case dict():
+            data_bytes = pickle.dumps(data)
+
+        case _:
+            raise HTTPException(400, "Tipo di dato non supportato per la firma")
+
+    # converte i bytes in una stringa esadecimale
     data_hex = data_bytes.hex()
 
     # calcola l'impronta dei dati

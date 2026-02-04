@@ -4,7 +4,7 @@ import asyncio
 from string import Template
 from fastapi import HTTPException
 from pymongo import MongoClient, AsyncMongoClient
-from pydantic import SecretStr
+from pydantic import SecretStr, EmailStr, ValidationError
 from models import (
     AccountModel,
     LoginResponse,
@@ -176,3 +176,41 @@ class Account:
                 return False
 
         return await asyncio.to_thread(_send_email)
+
+    @classmethod
+    async def get_user(
+        cls,
+        uid: str | None = None,
+        email: EmailStr | None = None,
+    ) -> AccountModel:
+        """
+        Fetches the account details from the database based on the user ID or Email.
+
+        Args:
+            uid (str | None): The unique identifier of the user.
+            email (EmailStr | None): The email of the user.
+
+        Returns:
+            AccountModel: The account details of the user.
+        """
+
+        match (uid, email):
+            case (None, None):
+                raise HTTPException(400, "Either uid or email must be provided")
+            case (str(), str()):
+                filter = {"uid": uid, "email": email}
+            case (str(), None):
+                filter = {"uid": uid}
+            case (None, str()):
+                filter = {"email": email}
+
+        async with AsyncMongoClient(MONGO_CS) as c:
+            user = await c[DB].accounts.find_one(filter)
+            if user is None:
+                raise HTTPException(404, "User not found")
+
+            try:
+                user = AccountModel(**user)
+                return user
+            except ValidationError:
+                raise HTTPException(500, f"errore nella creazione del modello Account")

@@ -1,1 +1,4 @@
-from .sign import verify_signature as verify_signature, sign_data as sign_data
+from .sign import (
+    verify_signature as verify_signature,
+    generate_signature as generate_signature,
+)
