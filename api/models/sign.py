@@ -49,20 +49,21 @@ class DigitalSignature(BaseModel):
 
 
 class SignedDocument(BaseModel):
-    """Documento firmato digitalmente"""
+    """Documento firmato digitalmente
 
-    content: Any = Field(description="Contenuto del documento (dict o str)")
-    signature: DigitalSignature
+    La firma viene aggiunta come proprietà dell'oggetto originale.
+    Tutti gli altri campi dell'oggetto originale vengono preservati.
+    """
+
+    signature: DigitalSignature = Field(description="Firma digitale del documento")
 
     model_config = ConfigDict(
-        extra="forbid",  # Non permette campi extra per evitare ambiguità
+        extra="allow",  # Permette campi extra per includere il contenuto originale
         json_schema_extra={
             "example": {
-                "content": {
-                    "invoice_id": "INV-2026-001",
-                    "amount": 1500.00,
-                    "currency": "EUR",
-                },
+                "invoice_id": "INV-2026-001",
+                "amount": 1500.00,
+                "currency": "EUR",
                 "signature": {
                     "metadata": {
                         "version": "2.0",

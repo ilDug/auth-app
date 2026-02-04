@@ -106,8 +106,18 @@ def sign_content(content: Any, user: AccountModel, date: str) -> SignedDocument:
     # 8. Crea l'oggetto firma completo
     digital_signature = DigitalSignature(metadata=metadata, signature=signature_b64)
 
-    # 9. Restituisce il documento firmato
-    return SignedDocument(content=content, signature=digital_signature)
+    # 9. Prepara il documento firmato
+    # Se il contenuto è un dict, aggiungi la firma come proprietà
+    if isinstance(content, dict):
+        # Rimuove signature se già presente (per evitare duplicati)
+        content_copy = {k: v for k, v in content.items() if k != "signature"}
+        result = {**content_copy, "signature": digital_signature.model_dump()}
+    else:
+        # Per contenuti non-dict (str, int, etc), crea un wrapper
+        result = {"data": content, "signature": digital_signature.model_dump()}
+
+    # 10. Restituisce il documento firmato
+    return SignedDocument(**result)
 
 
 ##########################################################
@@ -182,9 +192,17 @@ async def verify_signed_document(
             warnings=warnings,
         )
 
-    # 3. Ricalcola l'hash del contenuto
+    # 3. Estrae il contenuto originale (tutto tranne la signature)
+    document_dict = document.model_dump()
+    original_content = {k: v for k, v in document_dict.items() if k != "signature"}
+
+    # Se il documento aveva solo 'data' e 'signature', estrai il valore di 'data'
+    if len(original_content) == 1 and "data" in original_content:
+        original_content = original_content["data"]
+
+    # 4. Ricalcola l'hash del contenuto originale
     try:
-        content_type, content_bytes = _serialize_content(document.content)
+        content_type, content_bytes = _serialize_content(original_content)
         calculated_hash = hashlib.sha256(content_bytes).hexdigest()
     except Exception as e:
         errors.append(f"Error serializing content: {e}")
@@ -200,19 +218,19 @@ async def verify_signed_document(
             warnings=warnings,
         )
 
-    # 4. Verifica l'integrità del contenuto (confronto hash)
+    # 5. Verifica l'integrità del contenuto (confronto hash)
     if calculated_hash != metadata.content_hash:
         errors.append("Content has been modified (hash mismatch)")
     else:
         content_integrity = True
 
-    # 5. Verifica che il tipo di contenuto corrisponda
+    # 6. Verifica che il tipo di contenuto corrisponda
     if content_type != metadata.content_type:
         warnings.append(
             f"Content type mismatch: expected {metadata.content_type}, got {content_type}"
         )
 
-    # 6. Carica la chiave pubblica dell'utente
+    # 7. Carica la chiave pubblica dell'utente
     try:
         public_key = serialization.load_pem_public_key(
             user.keychain.public_key.encode()
@@ -231,13 +249,13 @@ async def verify_signed_document(
             warnings=warnings,
         )
 
-    # 7. Ricostruisce i metadata per la verifica
+    # 8. Ricostruisce i metadata per la verifica
     metadata_json = json.dumps(
         metadata.model_dump(), sort_keys=True, separators=(",", ":")
     )
     metadata_bytes = metadata_json.encode("utf-8")
 
-    # 8. Decodifica la firma da base64
+    # 9. Decodifica la firma da base64
     try:
         signature_bytes = base64.b64decode(signature_b64)
     except Exception as e:
@@ -254,7 +272,7 @@ async def verify_signed_document(
             warnings=warnings,
         )
 
-    # 9. Verifica la firma digitale
+    # 10. Verifica la firma digitale
     try:
         public_key.verify(
             signature_bytes,
@@ -270,7 +288,7 @@ async def verify_signed_document(
     except Exception as e:
         errors.append(f"Error during signature verification: {e}")
 
-    # 10. Verifica della data
+    # 11. Verifica della data
     try:
         signed_date = datetime.strptime(metadata.date, "%Y-%m-%d").date()
         today = datetime.now(timezone.utc).date()
@@ -287,7 +305,7 @@ async def verify_signed_document(
     except Exception as e:
         warnings.append(f"Could not parse date: {e}")
 
-    # 11. Determina validità complessiva
+    # 12. Determina validità complessiva
     valid = content_integrity and signature_authentic and len(errors) == 0
 
     return SignatureVerificationResult(

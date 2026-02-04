@@ -51,7 +51,9 @@ async def sign_document(
 
     ```json
     {
-      "content": {...},
+      "invoice_id": "INV-2026-001",
+      "amount": 1500.00,
+      "currency": "EUR",
       "signature": {
         "metadata": {
           "version": "2.0",
@@ -116,7 +118,9 @@ async def verify_document(
 
     ```json
     {
-      "content": {...},
+      "invoice_id": "INV-2026-001",
+      "amount": 1500.00,
+      "currency": "EUR",
       "signature": {
         "metadata": {...},
         "signature": "..."
