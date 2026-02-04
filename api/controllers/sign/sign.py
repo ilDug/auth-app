@@ -34,7 +34,7 @@ from cryptography.exceptions import InvalidSignature
 ##########################################################
 
 
-def sign_content(content: Any, user: AccountModel) -> SignedDocument:
+def sign_content(content: Any, user: AccountModel, date: str) -> SignedDocument:
     """
     Firma digitalmente un contenuto usando la chiave privata dell'utente.
 
@@ -42,13 +42,14 @@ def sign_content(content: Any, user: AccountModel) -> SignedDocument:
     - Usa JSON invece di pickle (sicuro e portabile)
     - Serializzazione deterministica (risultati consistenti)
     - Firma solo l'hash + metadata (efficiente)
-    - Timestamp preciso con timezone UTC
+    - Data della firma esplicita (tracciabilità)
     - Versioning del protocollo
     - Firma in base64 (standard web)
 
     Args:
         content: Contenuto da firmare (dict o str)
         user: Utente autenticato che firma
+        date: Data della firma nel formato yyyy-mm-dd
 
     Returns:
         SignedDocument: Documento firmato con metadata
@@ -67,7 +68,7 @@ def sign_content(content: Any, user: AccountModel) -> SignedDocument:
         version="2.0",
         algorithm="RSA-PSS-SHA256",
         uid=user.uid,
-        timestamp=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        date=date,
         content_hash=content_hash,
         content_type=content_type,
     )
@@ -155,7 +156,7 @@ async def verify_signed_document(
                 valid=False,
                 signer_uid=metadata.uid,
                 signer_email="unknown@unknown.com",
-                signed_at=metadata.timestamp,
+                signed_at=metadata.date,
                 algorithm=metadata.algorithm,
                 content_integrity=False,
                 signature_authentic=False,
@@ -173,7 +174,7 @@ async def verify_signed_document(
             valid=False,
             signer_uid=metadata.uid,
             signer_email=user.email,
-            signed_at=metadata.timestamp,
+            signed_at=metadata.date,
             algorithm=metadata.algorithm,
             content_integrity=False,
             signature_authentic=False,
@@ -191,7 +192,7 @@ async def verify_signed_document(
             valid=False,
             signer_uid=metadata.uid,
             signer_email=user.email,
-            signed_at=metadata.timestamp,
+            signed_at=metadata.date,
             algorithm=metadata.algorithm,
             content_integrity=False,
             signature_authentic=False,
@@ -222,7 +223,7 @@ async def verify_signed_document(
             valid=False,
             signer_uid=metadata.uid,
             signer_email=user.email,
-            signed_at=metadata.timestamp,
+            signed_at=metadata.date,
             algorithm=metadata.algorithm,
             content_integrity=content_integrity,
             signature_authentic=False,
@@ -245,7 +246,7 @@ async def verify_signed_document(
             valid=False,
             signer_uid=metadata.uid,
             signer_email=user.email,
-            signed_at=metadata.timestamp,
+            signed_at=metadata.date,
             algorithm=metadata.algorithm,
             content_integrity=content_integrity,
             signature_authentic=False,
@@ -269,24 +270,22 @@ async def verify_signed_document(
     except Exception as e:
         errors.append(f"Error during signature verification: {e}")
 
-    # 10. Verifica del timestamp
+    # 10. Verifica della data
     try:
-        signed_datetime = datetime.fromisoformat(
-            metadata.timestamp.replace("Z", "+00:00")
-        )
-        now = datetime.now(timezone.utc)
+        signed_date = datetime.strptime(metadata.date, "%Y-%m-%d").date()
+        today = datetime.now(timezone.utc).date()
 
         # Se la firma è nel futuro, è sospetta
-        if signed_datetime > now:
-            warnings.append("Signature timestamp is in the future")
+        if signed_date > today:
+            warnings.append("Signature date is in the future")
 
         # Se la firma è molto vecchia (es: >5 anni), potrebbe essere da considerare scaduta
-        age_days = (now - signed_datetime).days
+        age_days = (today - signed_date).days
         if age_days > 1825:  # ~5 anni
             warnings.append(f"Signature is very old ({age_days} days)")
 
     except Exception as e:
-        warnings.append(f"Could not parse timestamp: {e}")
+        warnings.append(f"Could not parse date: {e}")
 
     # 11. Determina validità complessiva
     valid = content_integrity and signature_authentic and len(errors) == 0
@@ -295,7 +294,7 @@ async def verify_signed_document(
         valid=valid,
         signer_uid=metadata.uid,
         signer_email=user.email,
-        signed_at=metadata.timestamp,
+        signed_at=metadata.date,
         algorithm=metadata.algorithm,
         content_integrity=content_integrity,
         signature_authentic=signature_authentic,

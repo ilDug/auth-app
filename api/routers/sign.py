@@ -5,10 +5,11 @@ Endpoints migliorati con maggiore sicurezza ed efficienza.
 """
 
 from typing import Annotated
-from fastapi import Body, APIRouter, HTTPException
+from fastapi import Body, APIRouter, HTTPException, Query
 from controllers.auth import AuthenticatedUser
 from controllers.sign.sign import sign_content, verify_signed_document
 from models.sign import SignedDocument, SignatureVerificationResult, SignRequest
+from datetime import datetime
 
 router = APIRouter(tags=["signature"], prefix="/api/v2/sign")
 
@@ -17,6 +18,7 @@ router = APIRouter(tags=["signature"], prefix="/api/v2/sign")
 async def sign_document(
     user: AuthenticatedUser,
     request: Annotated[SignRequest, Body(description="Contenuto da firmare")],
+    on: Annotated[str, Query(description="Data della firma nel formato yyyy-mm-dd")],
 ):
     """
     Firma digitalmente un documento usando il sistema v2.0.
@@ -25,14 +27,17 @@ async def sign_document(
     - ✅ Usa JSON invece di pickle (sicuro, portabile)
     - ✅ Serializzazione deterministica (risultati consistenti)
     - ✅ Firma solo l'hash (efficiente per file grandi)
-    - ✅ Timestamp preciso con timezone UTC
+    - ✅ Data della firma esplicita (tracciabilità)
     - ✅ Versioning del protocollo
     - ✅ Firma in base64 (standard web)
     - ✅ Struttura più pulita e standard-compliant
 
     ## Utilizzo:
 
-    ```json
+    ```http
+    POST /api/v2/sign/?on=2026-02-04
+    Authorization: Bearer {token}
+    
     {
       "content": {
         "invoice_id": "INV-2026-001",
@@ -52,7 +57,7 @@ async def sign_document(
           "version": "2.0",
           "algorithm": "RSA-PSS-SHA256",
           "uid": "user-uuid",
-          "timestamp": "2026-02-04T14:30:00Z",
+          "date": "2026-02-04",
           "content_hash": "abc123...",
           "content_type": "json"
         },
@@ -64,18 +69,25 @@ async def sign_document(
     Args:
         user: Utente autenticato (automatico tramite token)
         request: Oggetto contenente il contenuto da firmare
+        on: Data della firma nel formato yyyy-mm-dd
 
     Returns:
         SignedDocument: Documento firmato con metadata completi
 
     Raises:
-        400: Se il contenuto non è serializzabile
+        400: Se il contenuto non è serializzabile o la data non è valida
         500: Se la firma fallisce
     """
     if request.content is None:
         raise HTTPException(400, "Content to sign cannot be None")
 
-    return sign_content(content=request.content, user=user)
+    # Valida il formato della data
+    try:
+        datetime.strptime(on, "%Y-%m-%d")
+    except ValueError:
+        raise HTTPException(400, "Invalid date format. Use yyyy-mm-dd")
+
+    return sign_content(content=request.content, user=user, date=on)
 
 
 @router.post(
@@ -119,7 +131,7 @@ async def verify_document(
       "valid": true,
       "signer_uid": "user-uuid",
       "signer_email": "user@example.com",
-      "signed_at": "2026-02-04T14:30:00Z",
+      "signed_at": "2026-02-04",
       "algorithm": "RSA-PSS-SHA256",
       "content_integrity": true,
       "signature_authentic": true,
@@ -135,7 +147,7 @@ async def verify_document(
       "valid": false,
       "signer_uid": "user-uuid",
       "signer_email": "user@example.com",
-      "signed_at": "2026-02-04T14:30:00Z",
+      "signed_at": "2026-02-04",
       "algorithm": "RSA-PSS-SHA256",
       "content_integrity": false,
       "signature_authentic": false,
@@ -184,11 +196,11 @@ async def signature_system_info():
         "key_size": "2048 bits",
         "hash_algorithm": "SHA-256",
         "encoding": "base64",
-        "timestamp_format": "ISO8601 with UTC timezone",
+        "date_format": "yyyy-mm-dd (ISO8601 date only)",
         "improvements_over_v1": [
             "Uses JSON instead of pickle (security)",
             "Signs only hash + metadata (efficiency)",
-            "Precise timestamps with timezone",
+            "Date provided as parameter (explicit)",
             "Protocol versioning",
             "Deterministic serialization",
             "Base64 signature (web standard)",

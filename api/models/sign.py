@@ -16,9 +16,9 @@ class SignatureMetadata(BaseModel):
     version: Literal["2.0"] = "2.0"  # versione del protocollo di firma
     algorithm: Literal["RSA-PSS-SHA256"] = "RSA-PSS-SHA256"  # algoritmo utilizzato
     uid: str = Field(description="User ID del firmatario")
-    timestamp: str = Field(
-        description="Timestamp ISO8601 della firma (UTC)"
-    )  # es: 2026-02-04T14:30:00Z
+    date: str = Field(
+        description="Data della firma nel formato yyyy-mm-dd"
+    )  # es: 2026-02-04
     content_hash: str = Field(description="SHA-256 hash del contenuto")
     content_type: Literal["text", "json"] = Field(
         description="Tipo di contenuto firmato"
@@ -31,19 +31,21 @@ class DigitalSignature(BaseModel):
     metadata: SignatureMetadata
     signature: str = Field(description="Firma digitale in formato base64")
 
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "metadata": {
-                "version": "2.0",
-                "algorithm": "RSA-PSS-SHA256",
-                "uid": "f47ac10b-58cc-5372-a567-0e02b2c3d479",
-                "timestamp": "2026-02-04T14:30:00Z",
-                "content_hash": "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e",
-                "content_type": "json"
-            },
-            "signature": "MEUCIQDxG..."
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "metadata": {
+                    "version": "2.0",
+                    "algorithm": "RSA-PSS-SHA256",
+                    "uid": "f47ac10b-58cc-5372-a567-0e02b2c3d479",
+                    "date": "2026-02-04",
+                    "content_hash": "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e",
+                    "content_type": "json",
+                },
+                "signature": "MEUCIQDxG...",
+            }
         }
-    })
+    )
 
 
 class SignedDocument(BaseModel):
@@ -59,21 +61,21 @@ class SignedDocument(BaseModel):
                 "content": {
                     "invoice_id": "INV-2026-001",
                     "amount": 1500.00,
-                    "currency": "EUR"
+                    "currency": "EUR",
                 },
                 "signature": {
                     "metadata": {
                         "version": "2.0",
                         "algorithm": "RSA-PSS-SHA256",
                         "uid": "f47ac10b-58cc-5372-a567-0e02b2c3d479",
-                        "timestamp": "2026-02-04T14:30:00Z",
+                        "date": "2026-02-04",
                         "content_hash": "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e",
-                        "content_type": "json"
+                        "content_type": "json",
                     },
-                    "signature": "MEUCIQDxG..."
-                }
+                    "signature": "MEUCIQDxG...",
+                },
             }
-        }
+        },
     )
 
 
@@ -83,7 +85,7 @@ class SignatureVerificationResult(BaseModel):
     valid: bool = Field(description="True se la firma è valida")
     signer_uid: str = Field(description="UID del firmatario")
     signer_email: EmailStr = Field(description="Email del firmatario")
-    signed_at: str = Field(description="Timestamp della firma")
+    signed_at: str = Field(description="Data della firma (yyyy-mm-dd)")
     algorithm: str = Field(description="Algoritmo utilizzato")
     content_integrity: bool = Field(
         description="True se il contenuto non è stato modificato"
@@ -104,19 +106,21 @@ class SignatureVerificationResult(BaseModel):
         else:
             return f"Invalid signature: {'; '.join(self.errors)}"
 
-    model_config = ConfigDict(json_schema_extra={
-        "example": {
-            "valid": True,
-            "signer_uid": "f47ac10b-58cc-5372-a567-0e02b2c3d479",
-            "signer_email": "mario.rossi@example.com",
-            "signed_at": "2026-02-04T14:30:00Z",
-            "algorithm": "RSA-PSS-SHA256",
-            "content_integrity": True,
-            "signature_authentic": True,
-            "errors": [],
-            "warnings": []
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "valid": True,
+                "signer_uid": "f47ac10b-58cc-5372-a567-0e02b2c3d479",
+                "signer_email": "mario.rossi@example.com",
+                "signed_at": "2026-02-04",
+                "algorithm": "RSA-PSS-SHA256",
+                "content_integrity": True,
+                "signature_authentic": True,
+                "errors": [],
+                "warnings": [],
+            }
         }
-    })
+    )
 
 
 class SignRequest(BaseModel):
