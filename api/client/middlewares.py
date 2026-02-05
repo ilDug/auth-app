@@ -1,4 +1,4 @@
-from typing import Annotated, Callable
+from typing import Annotated
 from fastapi import Depends
 from .auth_fn import (
     auth_claims,

@@ -1,4 +1,4 @@
-from typing import Annotated, Callable
+from typing import Annotated
 from fastapi import Cookie, Depends, Header
 from .auth import Auth
 from ..account import Account

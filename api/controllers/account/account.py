@@ -213,4 +213,4 @@ class Account:
                 user = AccountModel(**user)
                 return user
             except ValidationError:
-                raise HTTPException(500, f"errore nella creazione del modello Account")
+                raise HTTPException(500, "errore nella creazione del modello Account")

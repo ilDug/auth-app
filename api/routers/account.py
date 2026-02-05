@@ -1,7 +1,7 @@
 from typing import Annotated
 from fastapi import APIRouter, Body, Path, Query, Response
 from core.config import COOKIES_SETTINGS
-from models import AccessRequestModel, PasswordRestoreKeychain, AccountRegistrationModel
+from models import AccessRequestModel, AccountRegistrationModel
 from controllers.account import Account
 
 router = APIRouter(tags=["account"], prefix="/api/v2/account")

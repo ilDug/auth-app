@@ -7,7 +7,7 @@ from datetime import datetime
 
 from core.config import CORS
 from core.middlewares import validation_exception_handler, http_rewrite_header_handler
-from routers import auth_router, sign_router, account_router
+from routers import auth_router, sign_router, account_router, users_router
 
 # LOGGING SETUP
 # ###########################################################
@@ -53,6 +53,7 @@ app.add_exception_handler(HTTPException, http_rewrite_header_handler)
 app.include_router(auth_router)
 app.include_router(sign_router)
 app.include_router(account_router)
+app.include_router(users_router)
 
 #  STATIC FILES
 # app.mount("/assets", StaticFiles(directory=ASSETS_PATH), name="static_media")

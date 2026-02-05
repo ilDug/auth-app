@@ -1,6 +1,5 @@
 from datetime import datetime
 from pydantic import BaseModel, EmailStr, ConfigDict
-from .mongo import MongoBase
 from pydantic.alias_generators import to_camel
 
 

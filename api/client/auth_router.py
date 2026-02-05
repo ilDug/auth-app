@@ -4,6 +4,7 @@ from fastapi import APIRouter, Request, HTTPException
 
 router = APIRouter(tags=["auth"], prefix="/api/v2")
 
+
 # ACCOUNT ROUTES
 @router.post("/account/login")
 @router.post("/account/register")
