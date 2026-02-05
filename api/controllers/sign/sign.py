@@ -1,20 +1,9 @@
-"""
-Sistema di Firma Digitale v2.0
-
-Implementazione migliorata con:
-- JSON invece di pickle (sicurezza)
-- Firma solo dell'hash (efficienza)
-- Timestamp precisi (audit trail)
-- Versioning del protocollo (manutenibilità)
-- Serializzazione deterministica (affidabilità)
-- Base64 per firma (standard web)
-"""
-
 from datetime import datetime, timezone
 import hashlib
 import json
 import base64
 from typing import Any
+from unittest import case
 from fastapi import HTTPException
 from models import AccountModel
 from models.sign import (
@@ -36,14 +25,6 @@ def sign_content(content: Any, user: AccountModel, date: str) -> SignedDocument:
     """
     Firma digitalmente un contenuto usando la chiave privata dell'utente.
 
-    Vantaggi rispetto alla versione precedente:
-    - Usa JSON invece di pickle (sicuro e portabile)
-    - Serializzazione deterministica (risultati consistenti)
-    - Firma solo l'hash + metadata (efficiente)
-    - Data della firma esplicita (tracciabilità)
-    - Versioning del protocollo
-    - Firma in base64 (standard web)
-
     Args:
         content: Contenuto da firmare (dict o str)
         user: Utente autenticato che firma
@@ -55,13 +36,48 @@ def sign_content(content: Any, user: AccountModel, date: str) -> SignedDocument:
     Raises:
         HTTPException: Se il contenuto non è serializzabile o la firma fallisce
     """
-    # 1. Determina il tipo di contenuto e serializza in modo deterministico
-    content_type, content_bytes = _serialize_content(content)
+    # 1. Carica la chiave privata dell'utente
+    try:
+        private_key = serialization.load_pem_private_key(
+            user.keychain.private_key.encode(),
+            password=None,
+        )
+    except Exception as e:
+        raise HTTPException(500, f"Errore nel caricamento della chiave privata: {e}")
 
-    # 2. Calcola l'hash SHA-256 del contenuto
+    # 2. Rimuove signature se già presente nel contenuto (per evitare inconsistenze nell'hash)
+    if isinstance(content, dict) and "signature" in content:
+        content = {k: v for k, v in content.items() if k != "signature"}
+
+    # 3. Determina il tipo di contenuto e serializza in modo deterministico e calcola l'hash
+    match content:
+        case str():
+            content_type = "text"
+            content_bytes = content.encode("utf-8")
+
+        case dict() | list() | int() | float() | bool() | type(None):
+            content_type = "json"
+            try:
+                # Contenuto JSON serializzabile
+                # Usa sort_keys=True per garantire ordine deterministico
+                # Usa separators compatti per rimuovere spazi inutili
+                json_str = json.dumps(content, sort_keys=True, separators=(",", ":"))
+                content_bytes = json_str.encode("utf-8")
+
+            except (TypeError, ValueError) as e:
+                raise HTTPException(400, f"Content is not JSON serializable: {e}")
+
+        case _:
+            raise HTTPException(
+                400,
+                f"Unsupported content type: {type(content).__name__}. "
+                "Only str, dict, list, int, float, bool, and None are supported.",
+            )
+
+    # 4. Calcola l'hash del contenuto
     content_hash = hashlib.sha256(content_bytes).hexdigest()
 
-    # 3. Crea i metadata della firma
+    # 5. Crea i metadata della firma
     metadata = SignatureMetadata(
         version="2.0",
         algorithm="RSA-PSS-SHA256",
@@ -71,21 +87,16 @@ def sign_content(content: Any, user: AccountModel, date: str) -> SignedDocument:
         content_type=content_type,
     )
 
-    # 4. Serializza i metadata in modo deterministico per la firma
-    metadata_json = json.dumps(
-        metadata.model_dump(), sort_keys=True, separators=(",", ":")
-    )
-    metadata_bytes = metadata_json.encode("utf-8")
-
-    # 5. Carica la chiave privata dell'utente
+    # 6. Serializza i metadata in modo deterministico per la firma
     try:
-        private_key = serialization.load_pem_private_key(
-            user.keychain.private_key.encode(), password=None
+        metadata_json = json.dumps(
+            metadata.model_dump(), sort_keys=True, separators=(",", ":")
         )
+        metadata_bytes = metadata_json.encode("utf-8")
     except Exception as e:
-        raise HTTPException(500, f"Errore nel caricamento della chiave privata: {e}")
+        raise HTTPException(500, f"Error serializing metadata: {e}")
 
-    # 6. Firma i metadata (che includono l'hash del contenuto)
+    # 7. Firma i metadata (che includono l'hash del contenuto)
     # Nota: firmiamo solo i metadata, non il contenuto completo (più efficiente)
     try:
         signature_bytes = private_key.sign(
@@ -98,23 +109,21 @@ def sign_content(content: Any, user: AccountModel, date: str) -> SignedDocument:
     except Exception as e:
         raise HTTPException(500, f"Errore durante la firma: {e}")
 
-    # 7. Converti la firma in base64 (standard per le API web)
+    # 8. Converti la firma in base64 (standard per le API web)
     signature_b64 = base64.b64encode(signature_bytes).decode("ascii")
 
-    # 8. Crea l'oggetto firma completo
+    # 9. Crea l'oggetto firma completo
     digital_signature = DigitalSignature(metadata=metadata, signature=signature_b64)
 
-    # 9. Prepara il documento firmato
+    # 10. Prepara il documento firmato
     # Se il contenuto è un dict, aggiungi la firma come proprietà
     if isinstance(content, dict):
-        # Rimuove signature se già presente (per evitare duplicati)
-        content_copy = {k: v for k, v in content.items() if k != "signature"}
-        result = {**content_copy, "signature": digital_signature.model_dump()}
+        result = {**content, "signature": digital_signature.model_dump()}
     else:
         # Per contenuti non-dict (str, int, etc), crea un wrapper
         result = {"data": content, "signature": digital_signature.model_dump()}
 
-    # 10. Restituisce il documento firmato
+    # 11. Restituisce il documento firmato
     return SignedDocument(**result)
 
 
@@ -184,7 +193,7 @@ def verify_signed_document(
 
     # 3. Ricalcola l'hash del contenuto originale
     try:
-        content_type, content_bytes = _serialize_content(original_content)
+        content_type, content_bytes = _serialize_and_hash_payload(original_content)
         calculated_hash = hashlib.sha256(content_bytes).hexdigest()
     except Exception as e:
         errors.append(f"Error serializing content: {e}")
@@ -308,24 +317,28 @@ def verify_signed_document(
 ##########################################################
 
 
-def _serialize_content(content: Any) -> tuple[str, bytes]:
+def _serialize_and_hash_payload(content: Any) -> tuple[str, bytes, str]:
     """
-    Serializza il contenuto in modo deterministico.
+    Serializza il contenuto in modo deterministico e crea l'hash.
 
     Args:
         content: Contenuto da serializzare (dict, str, int, float, etc.)
 
     Returns:
-        tuple: (content_type, content_bytes)
+        tuple: (content_type, content_bytes, content_hash)
             - content_type: "json" o "text"
             - content_bytes: rappresentazione in bytes del contenuto
+            - content_hash: hash SHA-256 del contenuto
 
     Raises:
         HTTPException: Se il contenuto non è serializzabile
     """
     if isinstance(content, str):
         # Contenuto testuale semplice
-        return ("text", content.encode("utf-8"))
+        t = "text"  # type
+        b = content.encode("utf-8")  # bytes
+        h = hashlib.sha256(b).hexdigest()  # hash
+        return (t, b, h)
 
     elif isinstance(content, (dict, list, int, float, bool, type(None))):
         # Contenuto JSON serializzabile
@@ -333,10 +346,13 @@ def _serialize_content(content: Any) -> tuple[str, bytes]:
         # Usa separators compatti per rimuovere spazi inutili
         try:
             json_str = json.dumps(content, sort_keys=True, separators=(",", ":"))
-            return ("json", json_str.encode("utf-8"))
+            t = "json"
+            b = json_str.encode("utf-8")
+            h = hashlib.sha256(b).hexdigest()
+            return (t, b, h)
+
         except (TypeError, ValueError) as e:
             raise HTTPException(400, f"Content is not JSON serializable: {e}")
-
     else:
         raise HTTPException(
             400,
