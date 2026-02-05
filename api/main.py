@@ -7,8 +7,13 @@ from datetime import datetime
 from pymongo.errors import PyMongoError
 
 from core.config import CORS
+<<<<<<< HEAD
 from core.middlewares import validation_exception_handler, http_rewrite_header_handler, mongo_error_handler
 from routers import auth_router, sign_router, account_router
+=======
+from core.middlewares import validation_exception_handler, http_rewrite_header_handler
+from routers import auth_router, sign_router, account_router, users_router
+>>>>>>> ceff4dded7dc8cb7a1374572542312ca817427c0
 
 # LOGGING SETUP
 # ###########################################################
@@ -37,7 +42,7 @@ ic("Starting auth-app... ")
 
 app = FastAPI(
     title="auth-app",
-    version="1.3.0",
+    version="2.0.1",
     description="Authentication and Authorization server backend",
 )
 
@@ -55,6 +60,7 @@ app.add_exception_handler(PyMongoError, mongo_error_handler)
 app.include_router(auth_router)
 app.include_router(sign_router)
 app.include_router(account_router)
+app.include_router(users_router)
 
 #  STATIC FILES
 # app.mount("/assets", StaticFiles(directory=ASSETS_PATH), name="static_media")

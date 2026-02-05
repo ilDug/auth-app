@@ -39,7 +39,7 @@ class Auth(JWT):
         ##### RETURN
         return jwt.model_dump() if claims else True
 
-    def authorize(self, auth_header: str, fingerprint: str, permission: str):
+    def authorize(self, auth_header: str, fingerprint: str, permission: str) -> bool:
         claims = self.authenticate(auth_header, fingerprint, claims=True)
         if permission in claims["authorizations"]:
             return True
