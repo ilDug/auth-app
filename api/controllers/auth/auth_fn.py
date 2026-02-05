@@ -42,38 +42,6 @@ def is_admin(
     return auth.authorize(authorization, fingerprint, "admin")
 
 
-def authorization_fn(
-    authorization: Annotated[str | None, Header()] = None,
-    fingerprint: Annotated[str | None, Cookie()] = None,
-) -> Callable:
-    """
-    Asynchronous function to create an authorization function with provided headers and cookies.
-
-    Args:
-        authorization (Annotated[str | None, Header]): The authorization header, which can be None.
-        fingerprint (Annotated[str | None, Cookie]): The fingerprint cookie, which can be None.
-
-    Returns:
-        Callable: A function that takes a permission string and returns the result of the authorization check.
-    """
-
-    def has_permission(permission: str):
-        auth = Auth()
-        # prima prova a vedere se è admin (ACCESSO COMPLETO A TUTTO)
-        try:
-            is_admin = auth.authorize(authorization, fingerprint, "admin")
-        except Exception:
-            is_admin = False
-        finally:
-            return (
-                True
-                if is_admin
-                else auth.authorize(authorization, fingerprint, permission)
-            )
-
-    return has_permission
-
-
 def get_token_claims(
     authorization: Annotated[str | None, Header()] = None,
     fingerprint: Annotated[str | None, Cookie()] = None,
@@ -106,3 +74,12 @@ async def get_account(uid: Annotated[str, Depends(get_uid)]) -> Account:
     """
     account = await Account.get_user(uid=uid)
     return account
+
+
+async def get_permissions(
+    claims: Annotated[dict, Depends(get_token_claims)],
+) -> list[str]:
+    """
+    Get the permissions from the token claims.
+    """
+    return claims.get("authorizations", [])
