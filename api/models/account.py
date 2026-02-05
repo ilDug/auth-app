@@ -47,17 +47,13 @@ class AccountModel(MongoBase):
 
     def to_public(self, include_id: bool = False) -> dict:
         """restituisce una rappresentazione pubblica dell'account senza dati sensibili"""
-        allowed_fields = {
-            "uid",
-            "username",
-            "email",
-            "active",
-            "authorizations",
-            "registration_date",
+        avoid_fields = {
+            "password_hash",
+            "keychain",
         }
-        if include_id:
-            allowed_fields.add("id")
-        return self.model_dump(include=allowed_fields)
+        if not include_id:
+            avoid_fields.add("id")
+        return self.model_dump(exclude=avoid_fields)
 
 
 class AccountRegistrationModel(AccountModel):

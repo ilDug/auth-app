@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, Body, Path
+from fastapi import APIRouter, Body, HTTPException, Path
 from controllers.users import Users
 from models import UuidStr
 from core import PERMISSIONS
@@ -25,9 +25,19 @@ async def get_user(user_id: Annotated[UuidStr, Path()], _: AuthenticationGuard):
 async def update_user(user: Annotated[dict, Body()], permissions: AuthPermissions):
     if PERMISSIONS.USER_ADMIN.value in permissions:
         return await Users.update(user)
+    else:
+        raise HTTPException(
+            status_code=403,
+            detail="Insufficient permissions, only user admins can update users",
+        )
 
 
 @router.delete("/{user_id}")
 async def delete_user(user_id: Annotated[str, Path()], permissions: AuthPermissions):
     if PERMISSIONS.USER_ADMIN.value in permissions:
         return await Users.remove(user_id)
+    else:
+        raise HTTPException(
+            status_code=403,
+            detail="Insufficient permissions, only user admins can delete users",
+        )
