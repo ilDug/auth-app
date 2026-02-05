@@ -8,14 +8,10 @@ secrets:
     JWT_KEY:
         file: lib/secrets/keys/auth.key
 
-##########################################
-volumes:
-    auth-vol:
-        name: auth-vol
-
+        
 ##########################################
 services:
-    backend:
+    auth:
         build:
             context: ./
             dockerfile: Dockerfile.dev.api
