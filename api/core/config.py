@@ -8,7 +8,6 @@ MODE = env["MODE"] if "MODE" in env else "DEVELOPMENT"
 FRONTEND_HOST = (
     env["FRONTEND_HOST"] if "FRONTEND_HOST" in env else "http://localhost:4200"
 )
-# HOST = "https://auth.dag.lan" if MODE == "PRODUCTION" else "http://localhost:8000"
 
 
 REGISTRATION_BEHAVIOUR = (
