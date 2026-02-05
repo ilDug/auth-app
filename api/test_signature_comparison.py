@@ -134,7 +134,9 @@ def compare_efficiency():
     print(f"   - Metadata: {v2_metadata_size} bytes")
     print(f"   - Firma solo i metadata (efficiente)")
 
-    print(f"\n💡 Risparmio: {v1_size - v2_size:,} bytes ({((v1_size - v2_size) / v1_size * 100):.1f}%)")
+    print(
+        f"\n💡 Risparmio: {v1_size - v2_size:,} bytes ({((v1_size - v2_size) / v1_size * 100):.1f}%)"
+    )
 
 
 def compare_features():
@@ -250,9 +252,7 @@ def performance_benchmark():
     print("=" * 60)
 
     # Crea documento grande
-    large_doc = {
-        "data": [{"id": i, "value": f"item_{i}" * 10} for i in range(10000)]
-    }
+    large_doc = {"data": [{"id": i, "value": f"item_{i}" * 10} for i in range(10000)]}
 
     print(f"\n📦 Documento di test: ~{len(json.dumps(large_doc))/1024:.1f} KB")
 

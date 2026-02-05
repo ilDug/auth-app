@@ -23,11 +23,9 @@ from models.sign import (
     SignedDocument,
     SignatureVerificationResult,
 )
-from controllers.account import Account
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.exceptions import InvalidSignature
-
 
 ##########################################################
 # FIRMA DIGITALE
@@ -125,28 +123,29 @@ def sign_content(content: Any, user: AccountModel, date: str) -> SignedDocument:
 ##########################################################
 
 
-async def verify_signed_document(
+def verify_signed_document(
     document: SignedDocument,
+    signer: AccountModel,
 ) -> SignatureVerificationResult:
     """
     Verifica la validità di un documento firmato digitalmente.
 
     Controlli eseguiti:
-    1. Recupera l'utente dal database
-    2. Verifica che l'algoritmo sia supportato
-    3. Ricalcola l'hash del contenuto
-    4. Verifica che l'hash corrisponda (integrità)
-    5. Verifica la firma digitale (autenticità)
-    6. Controlla timestamp e altre anomalie
+    1. Verifica che l'algoritmo sia supportato
+    2. Ricalcola l'hash del contenuto
+    3. Verifica che l'hash corrisponda (integrità)
+    4. Verifica la firma digitale (autenticità)
+    5. Controlla timestamp e altre anomalie
 
     Args:
         document: Documento firmato da verificare
+        signer: AccountModel dell'utente firmatario
 
     Returns:
         SignatureVerificationResult: Risultato dettagliato della verifica
 
     Raises:
-        HTTPException: Se l'utente non esiste o ci sono errori critici
+        HTTPException: Se ci sono errori critici
     """
     errors = []
     warnings = []
@@ -155,26 +154,9 @@ async def verify_signed_document(
 
     metadata = document.signature.metadata
     signature_b64 = document.signature.signature
+    user = signer
 
-    # 1. Recupera l'utente dal database
-    try:
-        user = await Account.get_user(uid=metadata.uid)
-    except HTTPException as e:
-        if e.status_code == 404:
-            errors.append(f"Signer user not found: {metadata.uid}")
-            return SignatureVerificationResult(
-                valid=False,
-                signer_uid=metadata.uid,
-                signer_email="unknown@unknown.com",
-                signed_at=metadata.date,
-                algorithm=metadata.algorithm,
-                content_integrity=False,
-                signature_authentic=False,
-                errors=errors,
-            )
-        raise
-
-    # 2. Verifica la versione e l'algoritmo
+    # 1. Verifica la versione e l'algoritmo
     if metadata.version != "2.0":
         warnings.append(f"Unsupported signature version: {metadata.version}")
 
@@ -192,7 +174,7 @@ async def verify_signed_document(
             warnings=warnings,
         )
 
-    # 3. Estrae il contenuto originale (tutto tranne la signature)
+    # 2. Estrae il contenuto originale (tutto tranne la signature)
     document_dict = document.model_dump()
     original_content = {k: v for k, v in document_dict.items() if k != "signature"}
 
@@ -200,7 +182,7 @@ async def verify_signed_document(
     if len(original_content) == 1 and "data" in original_content:
         original_content = original_content["data"]
 
-    # 4. Ricalcola l'hash del contenuto originale
+    # 3. Ricalcola l'hash del contenuto originale
     try:
         content_type, content_bytes = _serialize_content(original_content)
         calculated_hash = hashlib.sha256(content_bytes).hexdigest()
@@ -218,19 +200,19 @@ async def verify_signed_document(
             warnings=warnings,
         )
 
-    # 5. Verifica l'integrità del contenuto (confronto hash)
+    # 4. Verifica l'integrità del contenuto (confronto hash)
     if calculated_hash != metadata.content_hash:
         errors.append("Content has been modified (hash mismatch)")
     else:
         content_integrity = True
 
-    # 6. Verifica che il tipo di contenuto corrisponda
+    # 5. Verifica che il tipo di contenuto corrisponda
     if content_type != metadata.content_type:
         warnings.append(
             f"Content type mismatch: expected {metadata.content_type}, got {content_type}"
         )
 
-    # 7. Carica la chiave pubblica dell'utente
+    # 6. Carica la chiave pubblica dell'utente
     try:
         public_key = serialization.load_pem_public_key(
             user.keychain.public_key.encode()
@@ -249,13 +231,13 @@ async def verify_signed_document(
             warnings=warnings,
         )
 
-    # 8. Ricostruisce i metadata per la verifica
+    # 7. Ricostruisce i metadata per la verifica
     metadata_json = json.dumps(
         metadata.model_dump(), sort_keys=True, separators=(",", ":")
     )
     metadata_bytes = metadata_json.encode("utf-8")
 
-    # 9. Decodifica la firma da base64
+    # 8. Decodifica la firma da base64
     try:
         signature_bytes = base64.b64decode(signature_b64)
     except Exception as e:
@@ -272,7 +254,7 @@ async def verify_signed_document(
             warnings=warnings,
         )
 
-    # 10. Verifica la firma digitale
+    # 9. Verifica la firma digitale
     try:
         public_key.verify(
             signature_bytes,
@@ -288,7 +270,7 @@ async def verify_signed_document(
     except Exception as e:
         errors.append(f"Error during signature verification: {e}")
 
-    # 11. Verifica della data
+    # 10. Verifica della data
     try:
         signed_date = datetime.strptime(metadata.date, "%Y-%m-%d").date()
         today = datetime.now(timezone.utc).date()
@@ -305,7 +287,7 @@ async def verify_signed_document(
     except Exception as e:
         warnings.append(f"Could not parse date: {e}")
 
-    # 12. Determina validità complessiva
+    # 11. Determina validità complessiva
     valid = content_integrity and signature_authentic and len(errors) == 0
 
     return SignatureVerificationResult(
@@ -353,9 +335,7 @@ def _serialize_content(content: Any) -> tuple[str, bytes]:
             json_str = json.dumps(content, sort_keys=True, separators=(",", ":"))
             return ("json", json_str.encode("utf-8"))
         except (TypeError, ValueError) as e:
-            raise HTTPException(
-                400, f"Content is not JSON serializable: {e}"
-            )
+            raise HTTPException(400, f"Content is not JSON serializable: {e}")
 
     else:
         raise HTTPException(
@@ -363,18 +343,3 @@ def _serialize_content(content: Any) -> tuple[str, bytes]:
             f"Unsupported content type: {type(content).__name__}. "
             "Only str, dict, list, int, float, bool, and None are supported.",
         )
-
-
-def get_content_hash(content: Any) -> str:
-    """
-    Calcola l'hash SHA-256 di un contenuto senza firmarlo.
-    Utile per verifiche preliminari o confronti.
-
-    Args:
-        content: Contenuto di cui calcolare l'hash
-
-    Returns:
-        str: Hash SHA-256 in formato esadecimale
-    """
-    _, content_bytes = _serialize_content(content)
-    return hashlib.sha256(content_bytes).hexdigest()

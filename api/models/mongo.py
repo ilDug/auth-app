@@ -31,9 +31,13 @@ def validate_object_id(id: Any) -> ObjectId | None:
 Oid = Annotated[
     ObjectId | None,  # Tipo di dato effettivo
     PlainValidator(validate_object_id),  # Validatore personalizzato
-    WithJsonSchema({"type": "string"}, mode="serialization"), # Definizione dello schema JSON come stringa
+    WithJsonSchema(
+        {"type": "string"}, mode="serialization"
+    ),  # Definizione dello schema JSON come stringa
     PlainSerializer(
-        lambda v: str(v) if isinstance(v, ObjectId) else v, # Serializza un ObjectId di MongoDB in stringa
+        lambda v: (
+            str(v) if isinstance(v, ObjectId) else v
+        ),  # Serializza un ObjectId di MongoDB in stringa
         return_type=str | None,
         when_used="json",
     ),  # Serializzatore personalizzato che converte in stringa quando si esporta in JSON
@@ -52,12 +56,12 @@ class MongoBase(BaseModel):
     """
 
     model_config = ConfigDict(
-        extra="allow", # Permette campi extra non definiti nel modello
-        validate_by_name=True, # Consente la validazione utilizzando i nomi dei campi
-        validate_by_alias=True, # Consente la validazione utilizzando gli alias dei campi (utile per _id)
-        arbitrary_types_allowed=True, # Permette l'uso di tipi arbitrari come ObjectId
-        serialize_by_alias=True, # Usa gli alias dei campi durante la serializzazione (utile per _id)
-        alias_generator=to_camel, # Genera alias in camelCase automaticamente
+        extra="allow",  # Permette campi extra non definiti nel modello
+        validate_by_name=True,  # Consente la validazione utilizzando i nomi dei campi
+        validate_by_alias=True,  # Consente la validazione utilizzando gli alias dei campi (utile per _id)
+        arbitrary_types_allowed=True,  # Permette l'uso di tipi arbitrari come ObjectId
+        serialize_by_alias=True,  # Usa gli alias dei campi durante la serializzazione (utile per _id)
+        alias_generator=to_camel,  # Genera alias in camelCase automaticamente
     )
 
     id: Oid

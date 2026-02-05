@@ -14,8 +14,7 @@ from controllers.sign.sign import sign_content
 
 
 async def convert_v1_signature_to_v2(
-    v1_document: DataWithSignature,
-    re_sign: bool = True
+    v1_document: DataWithSignature, re_sign: bool = True
 ) -> SignedDocument | dict:
     """
     Converte un documento firmato con v1 al formato v2.
@@ -87,6 +86,7 @@ async def convert_v1_signature_to_v2(
         # Nota: La firma v1 in hex non è compatibile con v2 in base64
         # Convertiamo comunque per mantenere riferimento
         import base64
+
         try:
             signature_bytes = bytes.fromhex(v1_signature.signature)
             signature_b64 = base64.b64encode(signature_bytes).decode("ascii")
@@ -94,21 +94,17 @@ async def convert_v1_signature_to_v2(
             # Se la conversione fallisce, usa un placeholder
             signature_b64 = "INVALID_V1_SIGNATURE_NOT_CONVERTED"
 
-        v2_signature = DigitalSignature(
-            metadata=metadata,
-            signature=signature_b64
-        )
+        v2_signature = DigitalSignature(metadata=metadata, signature=signature_b64)
 
         return {
             "content": original_data,
             "signature": v2_signature.model_dump(),
-            "_migration_note": "This document was converted from v1 structure but signature is NOT valid. Please re-sign."
+            "_migration_note": "This document was converted from v1 structure but signature is NOT valid. Please re-sign.",
         }
 
 
 async def migrate_documents_batch(
-    v1_documents: list[DataWithSignature],
-    progress_callback=None
+    v1_documents: list[DataWithSignature], progress_callback=None
 ) -> dict[str, Any]:
     """
     Migra un batch di documenti da v1 a v2.
@@ -125,7 +121,7 @@ async def migrate_documents_batch(
         "successful": 0,
         "failed": 0,
         "errors": [],
-        "migrated_documents": []
+        "migrated_documents": [],
     }
 
     for i, v1_doc in enumerate(v1_documents):
@@ -140,11 +136,15 @@ async def migrate_documents_batch(
 
         except Exception as e:
             results["failed"] += 1
-            results["errors"].append({
-                "document_index": i,
-                "uid": v1_doc.signature.uid if hasattr(v1_doc, 'signature') else None,
-                "error": str(e)
-            })
+            results["errors"].append(
+                {
+                    "document_index": i,
+                    "uid": (
+                        v1_doc.signature.uid if hasattr(v1_doc, "signature") else None
+                    ),
+                    "error": str(e),
+                }
+            )
 
             if progress_callback:
                 progress_callback(i + 1, results["total"], f"error: {e}")
@@ -155,7 +155,7 @@ async def migrate_documents_batch(
 async def migrate_mongodb_collection(
     collection_name: str = "signed_documents",
     batch_size: int = 100,
-    dry_run: bool = True
+    dry_run: bool = True,
 ):
     """
     Migra una collezione MongoDB da v1 a v2.
@@ -207,8 +207,7 @@ async def migrate_mongodb_collection(
                     # Salva il documento migrato
                     # Opzione 1: Sostituisci documento esistente
                     await collection.replace_one(
-                        {"_id": doc["_id"]},
-                        v2_doc.model_dump()
+                        {"_id": doc["_id"]}, v2_doc.model_dump()
                     )
                     # Opzione 2: Crea nuova collezione v2
                     # await db[f"{collection_name}_v2"].insert_one(v2_doc.model_dump())
@@ -218,10 +217,7 @@ async def migrate_mongodb_collection(
 
             except Exception as e:
                 failed += 1
-                errors.append({
-                    "doc_id": str(doc.get("_id")),
-                    "error": str(e)
-                })
+                errors.append({"doc_id": str(doc.get("_id")), "error": str(e)})
                 print(f"❌ Errore documento {doc.get('_id')}: {e}")
 
         print(f"\n\n{'='*60}")
@@ -239,7 +235,7 @@ async def migrate_mongodb_collection(
             "total": total_docs,
             "successful": migrated,
             "failed": failed,
-            "errors": errors
+            "errors": errors,
         }
 
 
@@ -253,7 +249,9 @@ def generate_migration_report(stats: dict[str, Any]) -> str:
     Returns:
         str: Report formattato
     """
-    success_rate = (stats["successful"] / stats["total"] * 100) if stats["total"] > 0 else 0
+    success_rate = (
+        (stats["successful"] / stats["total"] * 100) if stats["total"] > 0 else 0
+    )
 
     report = f"""
 ╔{'='*58}╗
@@ -271,7 +269,9 @@ def generate_migration_report(stats: dict[str, Any]) -> str:
     if stats["errors"]:
         report += "⚠️  Errori:\n"
         for error in stats["errors"][:5]:
-            report += f"   - Doc #{error.get('document_index', '?')}: {error['error']}\n"
+            report += (
+                f"   - Doc #{error.get('document_index', '?')}: {error['error']}\n"
+            )
 
         if len(stats["errors"]) > 5:
             report += f"   ... e altri {len(stats['errors']) - 5} errori\n"
@@ -286,9 +286,9 @@ if __name__ == "__main__":
     import asyncio
 
     async def main():
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("SCRIPT DI MIGRAZIONE v1 → v2")
-        print("="*60)
+        print("=" * 60)
         print("\n⚠️  IMPORTANTE:")
         print("   - La migrazione richiede ri-firma dei documenti")
         print("   - I timestamp saranno aggiornati")

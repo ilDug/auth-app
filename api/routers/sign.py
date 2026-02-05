@@ -7,7 +7,8 @@ Endpoints migliorati con maggiore sicurezza ed efficienza.
 from typing import Annotated, Any
 from fastapi import Body, APIRouter, HTTPException, Query
 from controllers.auth import AuthenticatedUser
-from controllers.sign.sign import sign_content, verify_signed_document
+from controllers.sign import sign_content, verify_signed_document
+from controllers.account import Account
 from models.sign import SignedDocument, SignatureVerificationResult
 from datetime import datetime
 
@@ -99,7 +100,8 @@ async def sign_document(
 )
 async def verify_document(
     document: Annotated[
-        SignedDocument, Body(description="Documento firmato da verificare")
+        SignedDocument,
+        Body(description="Documento firmato da verificare"),
     ],
 ):
     """
@@ -133,12 +135,12 @@ async def verify_document(
     ```json
     {
       "valid": true,
-      "signer_uid": "user-uuid",
-      "signer_email": "user@example.com",
-      "signed_at": "2026-02-04",
+      "signerUid": "user-uuid",
+      "signerEmail": "user@example.com",
+      "signedAt": "2026-02-04",
       "algorithm": "RSA-PSS-SHA256",
-      "content_integrity": true,
-      "signature_authentic": true,
+      "contentIntegrity": true,
+      "signatureAuthentic": true,
       "errors": [],
       "warnings": []
     }
@@ -149,12 +151,12 @@ async def verify_document(
     ```json
     {
       "valid": false,
-      "signer_uid": "user-uuid",
-      "signer_email": "user@example.com",
-      "signed_at": "2026-02-04",
+      "signerUid": "user-uuid",
+      "signerEmail": "user@example.com",
+      "signedAt": "2026-02-04",
       "algorithm": "RSA-PSS-SHA256",
-      "content_integrity": false,
-      "signature_authentic": false,
+      "contentIntegrity": false,
+      "signatureAuthentic": false,
       "errors": [
         "Content has been modified (hash mismatch)",
         "Signature verification failed"
@@ -170,9 +172,33 @@ async def verify_document(
         SignatureVerificationResult: Report dettagliato della verifica
 
     Raises:
+        404: Se l'utente firmatario non esiste
         500: Se ci sono errori critici nel processo di verifica
     """
-    return await verify_signed_document(document)
+
+    # Recupera l'utente firmatario dal database
+    metadata = document.signature.metadata
+    try:
+        signer = await Account.get_user(uid=metadata.uid)
+    except HTTPException as e:
+        if e.status_code == 404:
+            # Utente non trovato - restituisco un risultato di verifica fallita
+            return SignatureVerificationResult(
+                valid=False,
+                signer_uid=metadata.uid,
+                signer_email="unknown@unknown.com",
+                signed_at=metadata.date,
+                algorithm=metadata.algorithm,
+                content_integrity=False,
+                signature_authentic=False,
+                errors=[f"Signer user not found: {metadata.uid}"],
+                warnings=[],
+            )
+        # Altri errori vengono rilanciati
+        raise
+
+    # Verifica il documento passando l'utente recuperato
+    return verify_signed_document(document, signer)
 
 
 @router.get(

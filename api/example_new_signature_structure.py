@@ -14,11 +14,12 @@ invoice_before = {
     "invoice_id": "INV-2026-001",
     "amount": 1500.00,
     "currency": "EUR",
-    "client": "Acme Corp"
+    "client": "Acme Corp",
 }
 
 print("\n📄 Documento PRIMA della firma:")
 import json
+
 print(json.dumps(invoice_before, indent=2))
 
 # Dopo la firma (viene aggiunta solo la proprietà 'signature')
@@ -34,10 +35,10 @@ invoice_after = {
             "uid": "f47ac10b-58cc-5372-a567-0e02b2c3d479",
             "date": "2026-02-04",
             "content_hash": "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e",
-            "content_type": "json"
+            "content_type": "json",
         },
-        "signature": "MEUCIQDxG8vqz2dVBXm..."
-    }
+        "signature": "MEUCIQDxG8vqz2dVBXm...",
+    },
 }
 
 print("\n✅ Documento DOPO la firma:")
@@ -57,8 +58,8 @@ document_with_old_signature = {
     "amount": 2000.00,
     "signature": {  # ⬅️ Firma vecchia (sarà rimossa)
         "metadata": {"date": "2025-01-01"},
-        "signature": "old_signature"
-    }
+        "signature": "old_signature",
+    },
 }
 
 print("\n⚠️  Documento CON firma vecchia:")
@@ -75,10 +76,10 @@ document_resigned = {
             "uid": "f47ac10b-58cc-5372-a567-0e02b2c3d479",
             "date": "2026-02-04",
             "content_hash": "new_hash",
-            "content_type": "json"
+            "content_type": "json",
         },
-        "signature": "NEW_SIGNATURE"
-    }
+        "signature": "NEW_SIGNATURE",
+    },
 }
 
 print("\n✅ Documento RI-FIRMATO (vecchia firma rimossa):")
@@ -96,7 +97,7 @@ signed_doc = {
     "invoice_id": "INV-2026-001",
     "amount": 1500.00,
     "currency": "EUR",
-    "signature": {"metadata": "...", "signature": "..."}
+    "signature": {"metadata": "...", "signature": "..."},
 }
 
 print("\n1️⃣  Sistema riceve documento firmato:")
