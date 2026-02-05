@@ -2,8 +2,7 @@ import httpx
 from .endpoints import AUTH_SERVER_URL, CA_CERT_PATH
 from fastapi import APIRouter, Request, HTTPException
 
-router = APIRouter(tags=["auth"])
-
+router = APIRouter(tags=["auth"], prefix="/api/v2")
 
 # ACCOUNT ROUTES
 @router.post("/account/login")

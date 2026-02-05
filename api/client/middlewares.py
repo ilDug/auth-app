@@ -1,41 +1,29 @@
 from typing import Annotated, Callable
 from fastapi import Depends
-from .functions import (
-    authentication_request,
-    authentication_guard,
-    authorization_request,
+from .auth_fn import (
+    auth_claims,
     get_user_id,
     get_permissions,
+    is_authenticated,
     is_admin,
+    get_email,
 )
 
-AuthenticationGuard = Annotated[bool, Depends(authentication_guard)]
+AuthenticationGuard = Annotated[bool, Depends(is_authenticated)]
 """verifica che l'utente sia autenticato"""
 
 # restituisce i claims dell'utente
-AuthClaims = Annotated[dict, Depends(authentication_request)]
+AuthClaims = Annotated[dict, Depends(auth_claims)]
 """restituisce i claims dell'utente"""
 
 UserId = Annotated[str, Depends(get_user_id)]
 """restituisce l'id dell'utente"""
 
-AuthPermissions = Annotated[str, Depends(get_permissions)]
+UserEmail = Annotated[str, Depends(get_email)]
+"""restituisce l'email dell'utente"""
+
+AuthPermissions = Annotated[list, Depends(get_permissions)]
 """restituisce i permessi dell'utente"""
-
-AuthorizeFn = Annotated[Callable, Depends(authorization_request)]
-"""
-restituisce una funzione che permette di verificare se il client possiede il permesso passat come argomento. Se non c'è il permesso, la funzione raise an Exception.
-
-EXAMPLE
-
-```python
-@router.get("/my/endpoint")
-async def my_function_with_permission(is_authorized: AuthorizeFn):
-    authorized = await is_authorized("admin")
-    ...
-    return ...
-```
-"""
 
 IsAdmin = Annotated[bool, Depends(is_admin)]
 """verifica che il client abbia il permesso di admin"""
