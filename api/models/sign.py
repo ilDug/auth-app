@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field
 from pydantic.alias_generators import to_camel
 from typing import Annotated, Literal
 
@@ -67,6 +67,7 @@ class SignatureVerificationResult(BaseModel):
         list[str], Field(default_factory=list, description="Lista di avvisi")
     ]
 
+    @computed_field
     @property
     def message(self) -> str:
         """Genera un messaggio descrittivo del risultato"""
@@ -79,17 +80,4 @@ class SignatureVerificationResult(BaseModel):
         alias_generator=to_camel,
         serialize_by_alias=True,
         validate_by_name=True,
-        json_schema_extra={
-            "example": {
-                "valid": True,
-                "signerUid": "f47ac10b-58cc-5372-a567-0e02b2c3d479",
-                "signerEmail": "mario.rossi@example.com",
-                "signedAt": "2026-02-04",
-                "algorithm": "RSA-PSS-SHA256",
-                "contentIntegrity": True,
-                "signatureAuthentic": True,
-                "errors": [],
-                "warnings": [],
-            }
-        },
     )
