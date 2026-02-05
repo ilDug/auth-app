@@ -4,11 +4,11 @@ Router per il sistema di firma digitale v2.0
 Endpoints migliorati con maggiore sicurezza ed efficienza.
 """
 
-from typing import Annotated
+from typing import Annotated, Any
 from fastapi import Body, APIRouter, HTTPException, Query
 from controllers.auth import AuthenticatedUser
 from controllers.sign.sign import sign_content, verify_signed_document
-from models.sign import SignedDocument, SignatureVerificationResult, SignRequest
+from models.sign import SignedDocument, SignatureVerificationResult
 from datetime import datetime
 
 router = APIRouter(tags=["signature"], prefix="/api/v2/sign")
@@ -17,7 +17,7 @@ router = APIRouter(tags=["signature"], prefix="/api/v2/sign")
 @router.post("/", response_model=SignedDocument, summary="Firma un documento")
 async def sign_document(
     user: AuthenticatedUser,
-    request: Annotated[SignRequest, Body(description="Contenuto da firmare")],
+    document: Annotated[Any, Body(description="Contenuto da firmare")],
     on: Annotated[str, Query(description="Data della firma nel formato yyyy-mm-dd")],
 ):
     """
@@ -37,7 +37,7 @@ async def sign_document(
     ```http
     POST /api/v2/sign/?on=2026-02-04
     Authorization: Bearer {token}
-    
+
     {
       "content": {
         "invoice_id": "INV-2026-001",
@@ -70,7 +70,7 @@ async def sign_document(
 
     Args:
         user: Utente autenticato (automatico tramite token)
-        request: Oggetto contenente il contenuto da firmare
+        document: Contenuto da firmare (qualsiasi tipo JSON-serializzabile)
         on: Data della firma nel formato yyyy-mm-dd
 
     Returns:
@@ -80,7 +80,7 @@ async def sign_document(
         400: Se il contenuto non è serializzabile o la data non è valida
         500: Se la firma fallisce
     """
-    if request.content is None:
+    if document is None:
         raise HTTPException(400, "Content to sign cannot be None")
 
     # Valida il formato della data
@@ -89,7 +89,7 @@ async def sign_document(
     except ValueError:
         raise HTTPException(400, "Invalid date format. Use yyyy-mm-dd")
 
-    return sign_content(content=request.content, user=user, date=on)
+    return sign_content(content=document, user=user, date=on)
 
 
 @router.post(
