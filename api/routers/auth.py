@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import Cookie, APIRouter, Header, Query
 from controllers.auth import Auth
 
-router = APIRouter(tags=["auth"], prefix="/api/v2/auth")
+router = APIRouter(tags=["auth"], prefix="/api/auth/v2/auth")
 
 # #########################################
 # from icecream import ic

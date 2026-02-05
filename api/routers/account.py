@@ -4,10 +4,10 @@ from core.config import COOKIES_SETTINGS
 from models import AccessRequestModel, AccountRegistrationModel
 from controllers.account import Account
 
-router = APIRouter(tags=["account"], prefix="/api/v2/account")
+router = APIRouter(tags=["account"], prefix="/api/auth/v2/account")
 
 
-@router.post("/account/login")
+@router.post("/login")
 async def login(res: Response, user: Annotated[AccessRequestModel, Body(...)]):
     token, fingerprint = await Account().login(user.email, user.password)
     res.set_cookie("fingerprint", fingerprint, **COOKIES_SETTINGS)
