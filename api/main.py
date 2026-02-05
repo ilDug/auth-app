@@ -36,7 +36,7 @@ ic("Starting auth-app... ")
 
 app = FastAPI(
     title="auth-app",
-    version="1.3.0",
+    version="2.0.0",
     description="Authentication and Authorization server backend",
 )
 
