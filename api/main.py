@@ -7,13 +7,12 @@ from datetime import datetime
 from pymongo.errors import PyMongoError
 
 from core.config import CORS
-<<<<<<< HEAD
-from core.middlewares import validation_exception_handler, http_rewrite_header_handler, mongo_error_handler
-from routers import auth_router, sign_router, account_router
-=======
-from core.middlewares import validation_exception_handler, http_rewrite_header_handler
+from core.middlewares import (
+    validation_exception_handler,
+    http_rewrite_header_handler,
+    mongo_error_handler,
+)
 from routers import auth_router, sign_router, account_router, users_router
->>>>>>> ceff4dded7dc8cb7a1374572542312ca817427c0
 
 # LOGGING SETUP
 # ###########################################################
@@ -67,7 +66,7 @@ app.include_router(users_router)
 
 
 # MAIN ROUTE
-@app.get("/", response_class=PlainTextResponse)
+@app.get("/api/auth/v2", response_class=PlainTextResponse)
 async def root():
     return f"""AUTH SERVER VERSION {app.version},
 RUNNING ON FASTAPI {fastapi.__version__}.
@@ -76,7 +75,7 @@ Server time: {datetime.now()} (isoformat: {datetime.now().isoformat()})
 
 
 # HEALTH CHECK for load balancer
-@app.get("/health")
+@app.get("/api/auth/v2/health")
 async def check():
     return True
 

@@ -78,6 +78,7 @@ class SignatureVerificationResult(BaseModel):
     model_config = ConfigDict(
         alias_generator=to_camel,
         serialize_by_alias=True,
+        validate_by_name=True,
         json_schema_extra={
             "example": {
                 "valid": True,

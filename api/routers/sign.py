@@ -9,7 +9,7 @@ from fastapi import Body, APIRouter, HTTPException, Query
 from controllers.auth import AuthenticatedUser
 from controllers.sign import sign_content, verify_signed_document
 from controllers.account import Account
-from models.sign import SignatureVerificationResult
+from models.sign import SignatureVerificationResult, SignatureMetadata
 from datetime import datetime
 
 router = APIRouter(tags=["signature"], prefix="/api/auth/v2/sign")
@@ -54,7 +54,7 @@ async def sign_document(
     summary="Verifica una firma digitale",
 )
 async def verify_document(
-    document: Annotated[Any, Body(description="Documento firmato da verificare")],
+    document: Annotated[dict, Body(description="Documento firmato da verificare")],
 ):
     """
     Verifica l'autenticità e l'integrità di un documento firmato.
@@ -71,7 +71,7 @@ async def verify_document(
     """
 
     # Recupera l'utente firmatario dal database
-    metadata = document.signature.metadata
+    metadata = SignatureMetadata(**document["signature"]["metadata"])
     try:
         signer = await Account.get_user(uid=metadata.uid)
     except HTTPException as e:
