@@ -3,13 +3,11 @@ import hashlib
 import json
 import base64
 from typing import Any
-from unittest import case
 from fastapi import HTTPException
 from models import AccountModel
 from models.sign import (
     SignatureMetadata,
     DigitalSignature,
-    SignedDocument,
     SignatureVerificationResult,
 )
 from cryptography.hazmat.primitives import serialization, hashes
@@ -21,7 +19,7 @@ from cryptography.exceptions import InvalidSignature
 ##########################################################
 
 
-def sign_content(content: Any, user: AccountModel, date: str) -> SignedDocument:
+def sign_content(content: Any, user: AccountModel, date: str) -> Any:
     """
     Firma digitalmente un contenuto usando la chiave privata dell'utente.
 
@@ -31,10 +29,39 @@ def sign_content(content: Any, user: AccountModel, date: str) -> SignedDocument:
         date: Data della firma nel formato yyyy-mm-dd
 
     Returns:
-        SignedDocument: Documento firmato con metadata
+        Any: Documento firmato con metadata
 
     Raises:
         HTTPException: Se il contenuto non è serializzabile o la firma fallisce
+
+    1. Carica la chiave privata dell'utente
+    2. Determina il tipo di contenuto e serializza in modo deterministico
+    3. Calcola l'hash del contenuto
+    4. Crea i metadata della firma
+    5. Serializza i metadata in modo deterministico per la firma
+    6. Firma i metadata (che includono l'hash del contenuto)
+    7. Crea l'oggetto firma completo
+    8. Prepara il documento firmato
+    9. Restituisce il documento firmato
+    Esempio di output:
+    ```json
+    {
+      "data": {
+        "field1": "value1",
+        "field2": 42
+        },
+        "signature": {
+            "metadata": {
+                "version": "2.0",
+                "algorithm": "RSA-PSS-SHA256",
+                "uid": "user-uid-123",
+                "date": "2026-02-04",
+                "contentHash": "abc123...",
+                "contentType": "json"
+            },
+            "signature": "MEUCIQDxG..."
+        }
+    }
     """
     # 1. Carica la chiave privata dell'utente
     try:
@@ -124,7 +151,7 @@ def sign_content(content: Any, user: AccountModel, date: str) -> SignedDocument:
         result = {"data": content, "signature": digital_signature.model_dump()}
 
     # 11. Restituisce il documento firmato
-    return SignedDocument(**result)
+    return result
 
 
 ##########################################################
@@ -133,18 +160,11 @@ def sign_content(content: Any, user: AccountModel, date: str) -> SignedDocument:
 
 
 def verify_signed_document(
-    document: SignedDocument,
+    document: dict,
     signer: AccountModel,
 ) -> SignatureVerificationResult:
     """
     Verifica la validità di un documento firmato digitalmente.
-
-    Controlli eseguiti:
-    1. Verifica che l'algoritmo sia supportato
-    2. Ricalcola l'hash del contenuto
-    3. Verifica che l'hash corrisponda (integrità)
-    4. Verifica la firma digitale (autenticità)
-    5. Controlla timestamp e altre anomalie
 
     Args:
         document: Documento firmato da verificare
@@ -155,17 +175,44 @@ def verify_signed_document(
 
     Raises:
         HTTPException: Se ci sono errori critici
+
+    Controlli eseguiti:
+        1. Verifica che l'algoritmo sia supportato
+        2. Ricalcola l'hash del contenuto
+        3. Verifica che l'hash corrisponda (integrità)
+        4. Verifica la firma digitale (autenticità)
+        5. Controlla timestamp e altre anomalie
+
     """
-    errors = []
-    warnings = []
-    content_integrity = False
-    signature_authentic = False
+    errors = []  # Lista di errori riscontrati durante la verifica
+    warnings = []  # Lista di avvisi riscontrati durante la verifica
+    content_integrity = False  # Flag per l'integrità del contenuto
+    signature_authentic = False  # Flag per l'autenticità della firma
 
-    metadata = document.signature.metadata
-    signature_b64 = document.signature.signature
-    user = signer
+    signature = DigitalSignature(**document["signature"])  # Firma digitale
+    metadata = signature.metadata  # Metadata della firma
+    signature_b64 = signature.signature  # Firma in base64
 
-    # 1. Verifica la versione e l'algoritmo
+    # 1. Carica la chiave pubblica dell'utente
+    try:
+        public_key = serialization.load_pem_public_key(
+            signer.keychain.public_key.encode()
+        )
+    except Exception as e:
+        errors.append(f"Error loading public key: {e}")
+        return SignatureVerificationResult(
+            valid=False,
+            signer_uid=metadata.uid,
+            signer_email=signer.email,
+            signed_at=metadata.date,
+            algorithm=metadata.algorithm,
+            content_integrity=False,
+            signature_authentic=False,
+            errors=errors,
+            warnings=warnings,
+        )
+
+    # 2. Verifica la versione e l'algoritmo
     if metadata.version != "2.0":
         warnings.append(f"Unsupported signature version: {metadata.version}")
 
@@ -174,7 +221,7 @@ def verify_signed_document(
         return SignatureVerificationResult(
             valid=False,
             signer_uid=metadata.uid,
-            signer_email=user.email,
+            signer_email=signer.email,
             signed_at=metadata.date,
             algorithm=metadata.algorithm,
             content_integrity=False,
@@ -183,24 +230,49 @@ def verify_signed_document(
             warnings=warnings,
         )
 
-    # 2. Estrae il contenuto originale (tutto tranne la signature)
-    document_dict = document.model_dump()
-    original_content = {k: v for k, v in document_dict.items() if k != "signature"}
+    # 3. Estrae il contenuto originale (tutto tranne la signature)
+    original_content = {k: v for k, v in document.items() if k != "signature"}
 
     # Se il documento aveva solo 'data' e 'signature', estrai il valore di 'data'
     if len(original_content) == 1 and "data" in original_content:
         original_content = original_content["data"]
 
-    # 3. Ricalcola l'hash del contenuto originale
+    # 4. Ricalcola l'hash del contenuto originale
     try:
-        content_type, content_bytes = _serialize_and_hash_payload(original_content)
+        match original_content:
+            case str():
+                content_type = "text"
+                content_bytes = original_content.encode("utf-8")
+
+            case dict() | list() | int() | float() | bool() | type(None):
+                content_type = "json"
+                try:
+                    # Contenuto JSON serializzabile
+                    # Usa sort_keys=True per garantire ordine deterministico
+                    # Usa separators compatti per rimuovere spazi inutili
+                    json_str = json.dumps(
+                        original_content, sort_keys=True, separators=(",", ":")
+                    )
+                    content_bytes = json_str.encode("utf-8")
+
+                except (TypeError, ValueError) as e:
+                    raise HTTPException(400, f"Content is not JSON serializable: {e}")
+
+            case _:
+                raise HTTPException(
+                    400,
+                    f"Unsupported content type: {type(original_content).__name__}. "
+                    "Only str, dict, list, int, float, bool, and None are supported.",
+                )
+
         calculated_hash = hashlib.sha256(content_bytes).hexdigest()
+
     except Exception as e:
         errors.append(f"Error serializing content: {e}")
         return SignatureVerificationResult(
             valid=False,
             signer_uid=metadata.uid,
-            signer_email=user.email,
+            signer_email=signer.email,
             signed_at=metadata.date,
             algorithm=metadata.algorithm,
             content_integrity=False,
@@ -209,35 +281,16 @@ def verify_signed_document(
             warnings=warnings,
         )
 
-    # 4. Verifica l'integrità del contenuto (confronto hash)
+    # 5. Verifica l'integrità del contenuto (confronto hash)
     if calculated_hash != metadata.content_hash:
         errors.append("Content has been modified (hash mismatch)")
     else:
         content_integrity = True
 
-    # 5. Verifica che il tipo di contenuto corrisponda
+    # 6. Verifica che il tipo di contenuto corrisponda
     if content_type != metadata.content_type:
         warnings.append(
             f"Content type mismatch: expected {metadata.content_type}, got {content_type}"
-        )
-
-    # 6. Carica la chiave pubblica dell'utente
-    try:
-        public_key = serialization.load_pem_public_key(
-            user.keychain.public_key.encode()
-        )
-    except Exception as e:
-        errors.append(f"Error loading public key: {e}")
-        return SignatureVerificationResult(
-            valid=False,
-            signer_uid=metadata.uid,
-            signer_email=user.email,
-            signed_at=metadata.date,
-            algorithm=metadata.algorithm,
-            content_integrity=content_integrity,
-            signature_authentic=False,
-            errors=errors,
-            warnings=warnings,
         )
 
     # 7. Ricostruisce i metadata per la verifica
@@ -254,7 +307,7 @@ def verify_signed_document(
         return SignatureVerificationResult(
             valid=False,
             signer_uid=metadata.uid,
-            signer_email=user.email,
+            signer_email=signer.email,
             signed_at=metadata.date,
             algorithm=metadata.algorithm,
             content_integrity=content_integrity,
@@ -263,7 +316,19 @@ def verify_signed_document(
             warnings=warnings,
         )
 
-    # 9. Verifica la firma digitale
+    # 9. **Verifica Crittografica della Firma (Signature Authenticity)**
+    #        PUNTO CHIAVE: Utilizza la chiave pubblica del firmatario per verificare che la firma
+    #        sia stata creata con la chiave privata corrispondente.
+    #        Come funziona la verifica con chiave pubblica:
+    #        - Durante la firma, la chiave privata aveva creato una firma crittografica sui metadata
+    #        - La chiave pubblica può "decifrare" matematicamente questa firma
+    #        - Se il risultato della decifratura corrisponde ai metadata originali, la firma è autentica
+    #        - Questo prova che solo il possessore della chiave privata poteva aver creato quella firma
+    #        - Utilizza lo schema RSA-PSS con padding probabilistico e hash SHA-256
+    #        - Se la verifica fallisce, significa che:
+    #            * La firma è stata manomessa, oppure
+    #            * I metadata sono stati modificati, oppure
+    #            * La firma non proviene dalla chiave privata del presunto firmatario
     try:
         public_key.verify(
             signature_bytes,
@@ -302,7 +367,7 @@ def verify_signed_document(
     return SignatureVerificationResult(
         valid=valid,
         signer_uid=metadata.uid,
-        signer_email=user.email,
+        signer_email=signer.email,
         signed_at=metadata.date,
         algorithm=metadata.algorithm,
         content_integrity=content_integrity,
@@ -310,52 +375,3 @@ def verify_signed_document(
         errors=errors,
         warnings=warnings,
     )
-
-
-##########################################################
-# FUNZIONI HELPER
-##########################################################
-
-
-def _serialize_and_hash_payload(content: Any) -> tuple[str, bytes, str]:
-    """
-    Serializza il contenuto in modo deterministico e crea l'hash.
-
-    Args:
-        content: Contenuto da serializzare (dict, str, int, float, etc.)
-
-    Returns:
-        tuple: (content_type, content_bytes, content_hash)
-            - content_type: "json" o "text"
-            - content_bytes: rappresentazione in bytes del contenuto
-            - content_hash: hash SHA-256 del contenuto
-
-    Raises:
-        HTTPException: Se il contenuto non è serializzabile
-    """
-    if isinstance(content, str):
-        # Contenuto testuale semplice
-        t = "text"  # type
-        b = content.encode("utf-8")  # bytes
-        h = hashlib.sha256(b).hexdigest()  # hash
-        return (t, b, h)
-
-    elif isinstance(content, (dict, list, int, float, bool, type(None))):
-        # Contenuto JSON serializzabile
-        # Usa sort_keys=True per garantire ordine deterministico
-        # Usa separators compatti per rimuovere spazi inutili
-        try:
-            json_str = json.dumps(content, sort_keys=True, separators=(",", ":"))
-            t = "json"
-            b = json_str.encode("utf-8")
-            h = hashlib.sha256(b).hexdigest()
-            return (t, b, h)
-
-        except (TypeError, ValueError) as e:
-            raise HTTPException(400, f"Content is not JSON serializable: {e}")
-    else:
-        raise HTTPException(
-            400,
-            f"Unsupported content type: {type(content).__name__}. "
-            "Only str, dict, list, int, float, bool, and None are supported.",
-        )

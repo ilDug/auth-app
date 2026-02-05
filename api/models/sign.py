@@ -46,41 +46,6 @@ class DigitalSignature(BaseModel):
     )
 
 
-class SignedDocument(BaseModel):
-    """Documento firmato digitalmente
-
-    La firma viene aggiunta come proprietà dell'oggetto originale.
-    Tutti gli altri campi dell'oggetto originale vengono preservati.
-    """
-
-    signature: Annotated[
-        DigitalSignature,
-        Field(description="Firma digitale del documento"),
-    ]
-
-    model_config = ConfigDict(
-        extra="allow",  # Permette campi extra per includere il contenuto originale
-        json_schema_extra={
-            "example": {
-                "invoice_id": "INV-2026-001",
-                "amount": 1500.00,
-                "currency": "EUR",
-                "signature": {
-                    "metadata": {
-                        "version": "2.0",
-                        "algorithm": "RSA-PSS-SHA256",
-                        "uid": "f47ac10b-58cc-5372-a567-0e02b2c3d479",
-                        "date": "2026-02-04",
-                        "contentHash": "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e",
-                        "contentType": "json",
-                    },
-                    "signature": "MEUCIQDxG...",
-                },
-            }
-        },
-    )
-
-
 class SignatureVerificationResult(BaseModel):
     """Risultato della verifica della firma"""
 

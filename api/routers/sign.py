@@ -9,13 +9,13 @@ from fastapi import Body, APIRouter, HTTPException, Query
 from controllers.auth import AuthenticatedUser
 from controllers.sign import sign_content, verify_signed_document
 from controllers.account import Account
-from models.sign import SignedDocument, SignatureVerificationResult
+from models.sign import SignatureVerificationResult
 from datetime import datetime
 
 router = APIRouter(tags=["signature"], prefix="/api/v2/sign")
 
 
-@router.post("/", response_model=SignedDocument, summary="Firma un documento")
+@router.post("/", summary="Firma un documento")
 async def sign_document(
     user: AuthenticatedUser,
     document: Annotated[Any, Body(description="Contenuto da firmare")],
@@ -24,58 +24,13 @@ async def sign_document(
     """
     Firma digitalmente un documento usando il sistema v2.0.
 
-    ## Miglioramenti rispetto a v1:
-    - ✅ Usa JSON invece di pickle (sicuro, portabile)
-    - ✅ Serializzazione deterministica (risultati consistenti)
-    - ✅ Firma solo l'hash (efficiente per file grandi)
-    - ✅ Data della firma esplicita (tracciabilità)
-    - ✅ Versioning del protocollo
-    - ✅ Firma in base64 (standard web)
-    - ✅ Struttura più pulita e standard-compliant
-
-    ## Utilizzo:
-
-    ```http
-    POST /api/v2/sign/?on=2026-02-04
-    Authorization: Bearer {token}
-
-    {
-      "content": {
-        "invoice_id": "INV-2026-001",
-        "amount": 1500.00,
-        "currency": "EUR"
-      }
-    }
-    ```
-
-    ## Risposta:
-
-    ```json
-    {
-      "invoice_id": "INV-2026-001",
-      "amount": 1500.00,
-      "currency": "EUR",
-      "signature": {
-        "metadata": {
-          "version": "2.0",
-          "algorithm": "RSA-PSS-SHA256",
-          "uid": "user-uuid",
-          "date": "2026-02-04",
-          "content_hash": "abc123...",
-          "content_type": "json"
-        },
-        "signature": "MEUCIQDxG..."
-      }
-    }
-    ```
-
     Args:
         user: Utente autenticato (automatico tramite token)
         document: Contenuto da firmare (qualsiasi tipo JSON-serializzabile)
         on: Data della firma nel formato yyyy-mm-dd
 
     Returns:
-        SignedDocument: Documento firmato con metadata completi
+        Documento firmato con metadata completi
 
     Raises:
         400: Se il contenuto non è serializzabile o la data non è valida
@@ -99,71 +54,10 @@ async def sign_document(
     summary="Verifica una firma digitale",
 )
 async def verify_document(
-    document: Annotated[
-        SignedDocument,
-        Body(description="Documento firmato da verificare"),
-    ],
+    document: Annotated[Any, Body(description="Documento firmato da verificare")],
 ):
     """
     Verifica l'autenticità e l'integrità di un documento firmato.
-
-    ## Verifiche eseguite:
-    1. ✅ Recupera l'utente firmatario dal database
-    2. ✅ Verifica supporto versione e algoritmo
-    3. ✅ Ricalcola l'hash del contenuto
-    4. ✅ Verifica integrità (hash match)
-    5. ✅ Verifica autenticità della firma (chiave pubblica)
-    6. ✅ Controlla timestamp per anomalie
-    7. ✅ Fornisce report dettagliato con errori e warning
-
-    ## Utilizzo:
-
-    ```json
-    {
-      "invoice_id": "INV-2026-001",
-      "amount": 1500.00,
-      "currency": "EUR",
-      "signature": {
-        "metadata": {...},
-        "signature": "..."
-      }
-    }
-    ```
-
-    ## Risposta (successo):
-
-    ```json
-    {
-      "valid": true,
-      "signerUid": "user-uuid",
-      "signerEmail": "user@example.com",
-      "signedAt": "2026-02-04",
-      "algorithm": "RSA-PSS-SHA256",
-      "contentIntegrity": true,
-      "signatureAuthentic": true,
-      "errors": [],
-      "warnings": []
-    }
-    ```
-
-    ## Risposta (fallimento):
-
-    ```json
-    {
-      "valid": false,
-      "signerUid": "user-uuid",
-      "signerEmail": "user@example.com",
-      "signedAt": "2026-02-04",
-      "algorithm": "RSA-PSS-SHA256",
-      "contentIntegrity": false,
-      "signatureAuthentic": false,
-      "errors": [
-        "Content has been modified (hash mismatch)",
-        "Signature verification failed"
-      ],
-      "warnings": []
-    }
-    ```
 
     Args:
         document: Documento firmato da verificare
@@ -199,49 +93,3 @@ async def verify_document(
 
     # Verifica il documento passando l'utente recuperato
     return verify_signed_document(document, signer)
-
-
-@router.get(
-    "/info",
-    summary="Informazioni sul sistema di firma v2.0",
-    response_model=dict,
-)
-async def signature_system_info():
-    """
-    Restituisce informazioni sul sistema di firma digitale v2.0.
-
-    Include:
-    - Versione del protocollo
-    - Algoritmi supportati
-    - Miglioramenti rispetto a v1
-    - Best practices
-
-    Returns:
-        dict: Informazioni sul sistema
-    """
-    return {
-        "version": "2.0",
-        "protocol": "Custom Digital Signature (JWS-inspired)",
-        "supported_algorithms": ["RSA-PSS-SHA256"],
-        "key_size": "2048 bits",
-        "hash_algorithm": "SHA-256",
-        "encoding": "base64",
-        "date_format": "yyyy-mm-dd (ISO8601 date only)",
-        "improvements_over_v1": [
-            "Uses JSON instead of pickle (security)",
-            "Signs only hash + metadata (efficiency)",
-            "Date provided as parameter (explicit)",
-            "Protocol versioning",
-            "Deterministic serialization",
-            "Base64 signature (web standard)",
-            "Separate content_integrity and signature_authentic checks",
-            "Warnings for suspicious signatures",
-        ],
-        "best_practices": [
-            "Always verify signatures before trusting content",
-            "Store signed documents with their signatures",
-            "Consider signature age in your security policy",
-            "Implement key rotation policies",
-            "Log all signature operations for audit trail",
-        ],
-    }
