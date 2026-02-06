@@ -1,6 +1,6 @@
 # auth-app
 
-[![Lint Python Code](https://github.com/ilDug/auth-app/actions/workflows/lint-python.yaml/badge.svg)](https://github.com/ilDug/auth-app/actions/workflows/lint-python.yaml)
+[![Lint Python](https://github.com/ilDug/auth-app/actions/workflows/check-python.yaml/badge.svg)](https://github.com/ilDug/auth-app/actions/workflows/check-python.yaml)
 
 **Backend Service** running on Docker Container, for managing users, accesses, accounts, permissions, privileges.
 
@@ -12,7 +12,7 @@ It needs:
 
 -   a certificate/key pair (RSA) to sign the JWT token
 -   a mongodb database to store users and permissions
--   a proxy to expose the service to the network (like [traefik](https://traefk.com))
+-   a proxy to expose the service to the network (like [traefik](https://traefik.io))
 
 In the [lib](./lib/scripts) folder there are some scripts to help to create the inital configuration in order to pass them to `docker-compose.yaml`file. All configuration files are saved automatically to `lib/secrets/` folder. Feel fre to use another more secure system to pass secrets files to the container.
 
@@ -38,43 +38,46 @@ Make sure to set SECRETS and ENVIROMENTAL VARIABLES for the container in the [`d
 
 ## API ENDPOINTS
 
+Base path: `/api/auth/v2`
+
 ### Account
 
-| METHOD | ENDPOINT                                      | PAYLOAD              |
-| ------ | --------------------------------------------- | -------------------- |
-| POST   | `/account/login`                              | `{email, password}`  |
-| POST   | `/account/register`                           | `{email, password}`  |
-| GET    | `/account/exists/{email_md5_hash}`            |                      |
-| GET    | `/account/activate/{key}`                     |                      |
-| GET    | `/account/resend-activation/{email_md5_hash}` |                      |
-| POST   | `/account/password/recover`                   | `{email}`            |
-| GET    | `/account/password/restore/init/{key}`        |                      |
-| POST   | `/account/password/restore/set`               | `{key, newpassword}` |
+| METHOD | ENDPOINT                           | PAYLOAD             |
+| ------ | ---------------------------------- | ------------------- |
+| POST   | `/account/login`                   | `{email, password}` |
+| POST   | `/account/register?notify=true`    | `{email, password}` |
+| GET    | `/account/exists/{email_md5_hash}` |                     |
 
 ### Digtal signature
 
-| METHOD | ENDPOINT                 | PAYLOAD                |
-| ------ | ------------------------ | ---------------------- |
-| POST   | `/auth/sign?on=2024-10-31`             | `{...data}`            |
-| POST   | `/auth/verify_signature` | `{...data, signature}` |
+| METHOD | ENDPOINT               | PAYLOAD                |
+| ------ | ---------------------- | ---------------------- |
+| POST   | `/sign/?on=2024-10-31` | `{...data}`            |
+| POST   | `/sign/verify`         | `{...data, signature}` |
 
 ### Remote authentication/authorization
 
-| METHOD | ENDPOINT                             | PAYLOAD                                                                                                  |
-| ------ | ------------------------------------ | -------------------------------------------------------------------------------------------------------- |
-| GET    | `/auth/authenticate?claims=true`     | <small>Uses the JWT in header. If clamis are true returns the jwt payload, else return boolean. </small> |
-| GET    | `/auth/authorize?permission=<admin>` | <small>set the permission you want to authorize</small>                                                  |
+| METHOD | ENDPOINT                             | PAYLOAD                                                                                                 |
+| ------ | ------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| GET    | `/auth/authenticate?claims=true`     | <small>Uses the JWT in header. If claims are true returns the jwt payload, else return boolean.</small> |
+| GET    | `/auth/authorize?permission=<admin>` | <small>Set the permission or role you want to authorize.</small>                                        |
 
 | METHOD | ENDPOINT           | PAYLOAD               |
 | ------ | ------------------ | --------------------- |
-| GET    | `/users`           |                       |
-| PUT    | `/users`           | _user object as json_ |
+| GET    | `/users/`          |                       |
+| PUT    | `/users/`          | _user object as json_ |
 | GET    | `/users/{user_id}` |                       |
 | DELETE | `/users/{user_id}` |                       |
 
-## REGISTRATON BEHAVIOUR
+### Health
 
-Select the behaviour of registration setting the environmetal variable `REGISTRATON_BEHAVIOUR`
+| METHOD | ENDPOINT  | PAYLOAD |
+| ------ | --------- | ------- |
+| GET    | `/health` |         |
+
+## REGISTRATION BEHAVIOUR
+
+Select the behaviour of registration setting the environmental variable `REGISTRATION_BEHAVIOUR`
 
 - `ALLOW_ANYBODY`
 - `ONLY_ADMIN`

@@ -20,11 +20,6 @@ secrets:
     JWT_KEY:
         file: lib/secrets/keys/auth.key
 
-##########################################
-volumes:
-    auth-vol:
-        name: auth-vol
-
 # ##########################################
 services:
     backend:
@@ -33,6 +28,7 @@ services:
         restart: unless-stopped
 
         environment:
+            MODE: PRODUCTION
             FRONTEND_HOST: "https://auth.dag.lan" # HOST con protocollo, porta
             TZ: Europe/Rome
             MONGO_USER: authuser # username of mongodb
@@ -55,9 +51,9 @@ services:
 
         labels:
             - "traefik.enable=true"
-            - "traefik.http.routers.authbackend.rule=Host(`auth.dag.lan`) && PathPrefix(`/api/v1`) "
+            - "traefik.http.routers.authbackend.rule=Host(`auth.dag.lan`) && PathPrefix(`/api/v2`) "
             - "traefik.http.routers.authbackend.entrypoints=websecure"
             - "traefik.http.routers.authbackend.tls=true"
             - "traefik.http.routers.authbackend.tls.certresolver=le"
             - "traefik.http.routers.authbackend.middlewares=auth_stripprefix@docker"
-            - "traefik.http.middlewares.auth_stripprefix.stripprefix.prefixes=/api/v1"
+            - "traefik.http.middlewares.auth_stripprefix.stripprefix.prefixes=/api/v2"

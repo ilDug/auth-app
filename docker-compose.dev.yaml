@@ -1,83 +1,39 @@
-networks:
-    # rete per la comunicazione interna dei containers
-    auth-net:
-        name: auth-net
-
-    # rete di default per la comunicazione con il proxy,
-    # da instanziare solo sui containers che si espongono
-    # default:
-    #     name: traefik_net
-    #     external: true
-
-##########################################
 secrets:
-    MONGO_ROOT_PW:
-        file: lib/secrets/MONGO_ROOT_PW
+    # password per l'utente del database
     MONGO_USER_PW:
-        file: lib/secrets/MONGO_AUTHUSER_PW
+        file: lib/secrets/MONGO_ROOT_PW
+    # configurazione per l'invio di email
     MAIL_CONFIG:
         file: lib/secrets/MAIL_CONFIG
+    # certificato per la firma dei JWT
     JWT_CERT:
         file: lib/secrets/certs/auth.crt
+    # chiave per la firma dei JWT
     JWT_KEY:
         file: lib/secrets/keys/auth.key
 
 ##########################################
-volumes:
-    auth-vol:
-        name: auth-vol
-
-##########################################
 services:
-    backend:
+    auth:
         build:
             context: ./
-            dockerfile: Dockerfile.dev.api
+            dockerfile: Dockerfile
         restart: unless-stopped
         container_name: auth-backend
         environment:
             MODE: DEVELOPMENT
             FRONTEND_HOST: "http://localhost:4200" # HOST con protocollo, porta e prefix
             TZ: Europe/Rome
-            MONGO_USER: authuser
+            MONGO_USER: root
             MONGO_DB: auth
-            MONGO_HOST: db:27017
+            MONGO_HOST: mongo1.dag.lan:27017,mongo2.dag.lan:27017,mongo3.dag.lan:27017
             REGISTRATION_BEHAVIOUR: "ALLOW_ANYBODY"
-
-        networks:
-            - auth-net
-            - default
         ports:
             - 8000:8000
         volumes:
-            - ./backend:/app
-            # - /etc/timezone:/etc/timezone:ro
-            # - /etc/localtime:/etc/localtime:ro
+            - ./api:/app
         secrets:
             - MAIL_CONFIG
             - MONGO_USER_PW
             - JWT_CERT
             - JWT_KEY
-
-        # network_mode: "bridge"
-
-    db:
-        image: mongo:7
-        restart: unless-stopped
-        container_name: db
-        environment:
-            MONGO_INITDB_ROOT_USERNAME: root
-            MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/MONGO_ROOT_PW
-            MONGO_USER: authuser
-            MONGO_DB: auth
-            # MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PW:?error}
-        ports:
-            - 27017:27017 # eliminare in PRODUCTION
-        networks:
-            - auth-net
-        volumes:
-            - auth-vol:/data/db # il database è salvato nel volume di docker
-            - ./db/init:/docker-entrypoint-initdb.d # esegui i file al primo avvio
-        secrets:
-            - MONGO_ROOT_PW
-            - MONGO_USER_PW
