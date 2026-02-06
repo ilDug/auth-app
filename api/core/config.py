@@ -4,17 +4,11 @@ import json
 import uuid
 
 ROOT = Path("/app")
-MODE = env["MODE"] if "MODE" in env else "PRODUCTION"
-FRONTEND_HOST = (
-    env["FRONTEND_HOST"] if "FRONTEND_HOST" in env else "http://localhost:4200"
-)
+MODE = env.get("MODE", "PRODUCTION").upper()
+FRONTEND_HOST = env.get("FRONTEND_HOST", "http://localhost:4200")
 
 
-REGISTRATION_BEHAVIOUR = (
-    env["REGISTRATION_BEHAVIOUR"]
-    if "REGISTRATION_BEHAVIOUR" in env
-    else "ALLOW_ANYBODY"
-)
+REGISTRATION_BEHAVIOUR = env.get("REGISTRATION_BEHAVIOUR", "ALLOW_ANYBODY")
 """
 definisce il comportamento del sistema di registrazione
 
@@ -87,9 +81,9 @@ CORS = {
 
 # MONGO
 ###############################################
-MONGO_HOST = env["MONGO_HOST"] if "MONGO_HOST" in env else "mongo.fake.lan:27017"
-MONGO_USER = env["MONGO_USER"] if "MONGO_USER" in env else "fake_user"
-DB = env["MONGO_DB"] if "MONGO_DB" in env else "fake_db"
+MONGO_HOST = env.get("MONGO_HOST", "mongo.fake.lan:27017")
+MONGO_USER = env.get("MONGO_USER", "fake_user")
+DB = env.get("MONGO_DB", "fake_db")
 MONGO_PW_PATH = Path("/run/secrets/MONGO_USER_PW")
 MONGO_PW = MONGO_PW_PATH.read_text() if MONGO_PW_PATH.exists() else "fake_mongo_pw"
 MONGO_CS = f"mongodb://{MONGO_USER}:{MONGO_PW}@{MONGO_HOST}/{DB}?authSource=admin"

@@ -1,6 +1,6 @@
 # auth-app
 
-[![Lint Python Code](https://github.com/ilDug/auth-app/actions/workflows/lint-python.yaml/badge.svg)](https://github.com/ilDug/auth-app/actions/workflows/lint-python.yaml)
+[![Lint Python](https://github.com/ilDug/auth-app/actions/workflows/check-python.yaml/badge.svg)](https://github.com/ilDug/auth-app/actions/workflows/check-python.yaml)
 
 **Backend Service** running on Docker Container, for managing users, accesses, accounts, permissions, privileges.
 
@@ -12,7 +12,7 @@ It needs:
 
 -   a certificate/key pair (RSA) to sign the JWT token
 -   a mongodb database to store users and permissions
--   a proxy to expose the service to the network (like [traefik](https://traefk.com))
+-   a proxy to expose the service to the network (like [traefik](https://traefik.io))
 
 In the [lib](./lib/scripts) folder there are some scripts to help to create the inital configuration in order to pass them to `docker-compose.yaml`file. All configuration files are saved automatically to `lib/secrets/` folder. Feel fre to use another more secure system to pass secrets files to the container.
 
