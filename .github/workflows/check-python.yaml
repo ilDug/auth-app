@@ -30,4 +30,4 @@ jobs:
             - name: Run ruff check
               run: |
                   cd ./api
-                  uv ruff check --output-format github
+                  uvx ruff check --output-format github
