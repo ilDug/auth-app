@@ -1,6 +1,5 @@
 import hashlib
 import uuid
-import bcrypt
 from datetime import datetime
 from pydantic import (
     BaseModel,
@@ -11,6 +10,7 @@ from pydantic import (
     model_validator,
 )
 from typing import Annotated, List
+from argon2 import PasswordHasher
 
 from core.config import ACTIVATION_KEY_LENGTH, USER_NAMESPACE
 from core.utils import generate_crypto_keys, UserKeyChain
@@ -36,7 +36,7 @@ class AccountModel(MongoBase):
         Field(title="autorizzazioni e permessi dell'account"),
     ] = []
     password_hash: Annotated[
-        str, Field(None, title="Hash SHA256 della password dell'account")
+        str, Field(None, title="Hash Argon2 della password dell'account")
     ]
     registration_date: Annotated[
         datetime, Field(title="data di registrazione dell'account")
@@ -98,9 +98,8 @@ class AccountRegistrationModel(AccountModel):
                         if hasattr(data["password"], "get_secret_value")
                         else data["password"]
                     )
-                    data["password_hash"] = bcrypt.hashpw(
-                        pwd.encode(), bcrypt.gensalt()
-                    ).decode()
+                    ph = PasswordHasher()
+                    data["password_hash"] = ph.hash(pwd)
 
             if "keychain" not in data or data["keychain"] is None:
                 data["keychain"] = generate_crypto_keys()

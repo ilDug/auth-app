@@ -1,6 +1,7 @@
 import hashlib
-import bcrypt
 import asyncio
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError, VerificationError
 from string import Template
 from fastapi import HTTPException
 from pymongo import MongoClient, AsyncMongoClient
@@ -45,14 +46,16 @@ class Account:
                 )
             user = AccountModel(**user)
 
-            # verifica la password in modo async (bcrypt è CPU-intensive)
-            is_valid_password: bool = await asyncio.to_thread(
-                bcrypt.checkpw,
-                password.get_secret_value().encode(),
-                user.password_hash.encode(),
-            )
+            # verifica la password in modo async (Argon2 è CPU-intensive)
+            try:
+                ph = PasswordHasher()
+                await asyncio.to_thread(
+                    ph.verify,
+                    user.password_hash,
+                    password.get_secret_value(),
+                )
 
-            if not is_valid_password:
+            except (VerifyMismatchError, VerificationError):
                 raise HTTPException(500, "password non corretta per questo account.")
 
             # crea i tokens e gli oggetti JWT
