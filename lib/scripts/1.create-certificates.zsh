@@ -12,7 +12,6 @@ PATHS=(
     $CERTS
     $KEYS
 )
-DEST=backend/lib/
 CNF=lib/config/openssl/openssl.cnf
 
 
