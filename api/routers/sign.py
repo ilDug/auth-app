@@ -12,7 +12,7 @@ from controllers.account import Account
 from models.sign import SignatureVerificationResult, SignatureMetadata
 from datetime import datetime
 
-router = APIRouter(tags=["signature"], prefix="/api/auth/v2/sign")
+router = APIRouter(tags=["signature"], prefix="/sign")
 
 
 @router.post("/", summary="Firma un documento")

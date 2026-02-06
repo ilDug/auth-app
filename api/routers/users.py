@@ -7,7 +7,7 @@ from controllers.auth import AuthenticationGuard, AuthPermissions
 
 router = APIRouter(
     tags=["users"],
-    prefix="/api/auth/v2/users",
+    prefix="/users",
 )
 
 

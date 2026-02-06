@@ -4,7 +4,7 @@ from core.config import COOKIES_SETTINGS
 from models import AccessRequestModel, AccountRegistrationModel
 from controllers.account import Account
 
-router = APIRouter(tags=["account"], prefix="/api/auth/v2/account")
+router = APIRouter(tags=["account"], prefix="/account")
 
 
 @router.post("/login")

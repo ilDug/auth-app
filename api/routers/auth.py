@@ -3,7 +3,7 @@ from fastapi import Cookie, APIRouter, Header, Query
 from controllers.auth import Auth, TokenClaims
 
 
-router = APIRouter(tags=["auth"], prefix="/api/auth/v2/auth")
+router = APIRouter(tags=["auth"], prefix="/auth")
 
 # #########################################
 # from icecream import ic

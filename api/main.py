@@ -14,34 +14,18 @@ from core.middlewares import (
 )
 from routers import auth_router, sign_router, account_router, users_router
 
-# LOGGING SETUP
-# ###########################################################
-# import logging
+#############################################################
 from icecream import ic
 
-ic.configureOutput(includeContext=True, prefix="DAG LOG | ")
-
-# log_formatter = logging.Formatter(
-#     fmt="%(asctime)s - DAG - %(levelname)s - %(message)s",
-#     datefmt="%Y-%m-%d %H:%M:%S",
-# )
-# console_handler = logging.StreamHandler()
-# console_handler.setFormatter(log_formatter)
-# # file_handler = logging.FileHandler("auth-app.log")
-# # file_handler.setFormatter(log_formatter)
-# logger = logging.getLogger("auth-app")
-# logger.setLevel(logging.WARNING)
-# logger.addHandler(console_handler)
-# logger.addHandler(file_handler)
-# ###########################################################
-
+ic.configureOutput(includeContext=True, prefix=lambda: f"DAG LOG | {datetime.now().isoformat()} | ")
+#############################################################
 
 ic("Starting auth-app... ")
 
 
 app = FastAPI(
     title="auth-app",
-    version="2.0.2",
+    version="2.0.3",
     description="Authentication and Authorization server backend",
 )
 
@@ -64,9 +48,8 @@ app.include_router(users_router)
 #  STATIC FILES
 # app.mount("/assets", StaticFiles(directory=ASSETS_PATH), name="static_media")
 
-
 # MAIN ROUTE
-@app.get("/api/auth/v2", response_class=PlainTextResponse)
+@app.get("/", response_class=PlainTextResponse)
 async def root():
     return f"""AUTH SERVER VERSION {app.version},
 RUNNING ON FASTAPI {fastapi.__version__}.
@@ -75,13 +58,6 @@ Server time: {datetime.now()} (isoformat: {datetime.now().isoformat()})
 
 
 # HEALTH CHECK for load balancer
-@app.get("/api/auth/v2/health")
+@app.get("/health")
 async def check():
     return True
-
-
-# @app.get("/upgrade")
-# async def upgrade():
-#     # aggiorna gliaccount aggiungendo le chiavi mancanti
-#     updated_accounts = add_keys_to_all_accounts()
-#     return {"updated_accounts": updated_accounts}
