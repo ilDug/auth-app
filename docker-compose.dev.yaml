@@ -1,20 +1,23 @@
 secrets:
+    # password per l'utente del database
     MONGO_USER_PW:
         file: lib/secrets/MONGO_ROOT_PW
+    # configurazione per l'invio di email
     MAIL_CONFIG:
         file: lib/secrets/MAIL_CONFIG
+    # certificato per la firma dei JWT
     JWT_CERT:
         file: lib/secrets/certs/auth.crt
+    # chiave per la firma dei JWT
     JWT_KEY:
         file: lib/secrets/keys/auth.key
 
-        
 ##########################################
 services:
     auth:
         build:
             context: ./
-            dockerfile: Dockerfile.dev.api
+            dockerfile: Dockerfile
         restart: unless-stopped
         container_name: auth-backend
         environment:
@@ -34,4 +37,3 @@ services:
             - MONGO_USER_PW
             - JWT_CERT
             - JWT_KEY
-

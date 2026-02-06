@@ -4,7 +4,7 @@ import json
 import uuid
 
 ROOT = Path("/app")
-MODE = env["MODE"] if "MODE" in env else "DEVELOPMENT"
+MODE = env["MODE"] if "MODE" in env else "PRODUCTION"
 FRONTEND_HOST = (
     env["FRONTEND_HOST"] if "FRONTEND_HOST" in env else "http://localhost:4200"
 )
