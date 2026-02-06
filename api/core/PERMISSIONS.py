@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class PERMISSIONS(Enum):
     BASIC = "basic"
     ADMIN = "admin"

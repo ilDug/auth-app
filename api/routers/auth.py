@@ -1,7 +1,6 @@
 from typing import Annotated
-from fastapi import Cookie, APIRouter, Header, Query
-from controllers.auth import Auth, TokenClaims
-
+from fastapi import APIRouter, Query
+from controllers.auth import TokenClaims
 
 router = APIRouter(tags=["auth"], prefix="/auth")
 

@@ -17,7 +17,9 @@ from routers import auth_router, sign_router, account_router, users_router
 #############################################################
 from icecream import ic
 
-ic.configureOutput(includeContext=True, prefix=lambda: f"DAG LOG | {datetime.now().isoformat()} | ")
+ic.configureOutput(
+    includeContext=True, prefix=lambda: f"DAG LOG | {datetime.now().isoformat()} | "
+)
 #############################################################
 
 ic("Starting auth-app... ")
@@ -47,6 +49,7 @@ app.include_router(users_router)
 
 #  STATIC FILES
 # app.mount("/assets", StaticFiles(directory=ASSETS_PATH), name="static_media")
+
 
 # MAIN ROUTE
 @app.get("/", response_class=PlainTextResponse)
