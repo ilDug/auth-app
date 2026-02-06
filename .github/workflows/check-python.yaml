@@ -1,0 +1,33 @@
+name: Ruff Check Python Code
+
+on:
+    push:
+
+    pull_request:
+        branches:
+            - main
+    workflow_dispatch:
+
+jobs:
+    check:
+        name: check with ruff
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v6
+
+            - name: Install the latest version of uv and set the python version
+              uses: astral-sh/setup-uv@v7
+              with:
+                  python-version: "3.13"
+                  working-directory: api/
+
+            - name: Install dependencies
+              run: |
+                  cd ./api
+                  uv sync --frozen
+
+            - name: Run ruff check
+              run: |
+                  cd ./api
+                  uv ruff check --output-format github

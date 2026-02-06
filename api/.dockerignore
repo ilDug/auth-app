@@ -1,5 +1,5 @@
 lib/certs/
 lib/keys/
-venv
+venv/
 .env
-.venv
+.venv/

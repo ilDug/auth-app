@@ -7,19 +7,44 @@ on:
 env:
     REGISTRY: ghcr.io
     IMAGE: ildug/auth-backend
+permissions:
+    contents: read
+    packages: write
 
 jobs:
-    containerize_bakend:
+    containerize_backend:
         name: Build backend api application and push Docker image
         runs-on: ubuntu-latest
-        if: github.ref_type == 'tag'
+        if: startsWith(github.ref, 'refs/tags/')
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6
 
-            - name: Get Semver Tag
-              uses: ilDug/get-tag-action@v1.0.3
-              id: tag
+            - name: Extract version tags
+              id: versions
+              run: |
+                  VERSION_FILE_PATH="VERSION.conf"
+                  if [[ ! -f "$VERSION_FILE_PATH" ]]; then
+                    echo "Error: VERSION.conf not found"
+                    exit 1
+                  fi
+
+                  TAG_WITH_V="$(tr -d ' \t\r\n' < "$VERSION_FILE_PATH")"
+
+                  if [[ -z "$TAG_WITH_V" ]]; then
+                    echo "Error: VERSION.conf is empty"
+                    exit 1
+                  fi
+
+                  # Validate that TAG_WITH_V is a valid semver tag (v1.2.3 or 1.2.3)
+                  if [[ ! "$TAG_WITH_V" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
+                    echo "Error: '$TAG_WITH_V' is not a valid semver tag"
+                    exit 1
+                  fi
+
+                  TAG_WITHOUT_V="${TAG_WITH_V#v}"
+                  echo "with_v=$TAG_WITH_V" >> $GITHUB_OUTPUT
+                  echo "without_v=$TAG_WITHOUT_V" >> $GITHUB_OUTPUT
 
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v3
@@ -35,8 +60,13 @@ jobs:
               run: |
                   docker buildx create --driver docker-container --use
                   docker buildx build . \
-                    --file Dockerfile.prod.api \
-                    --tag ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ steps.tag.outputs.version }} \
+                    --file Dockerfile \
+                    --tag ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ steps.versions.outputs.with_v }} \
+                    --tag ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ steps.versions.outputs.without_v }} \
                     --tag ${{ env.REGISTRY }}/${{ env.IMAGE }}:latest \
                     --platform linux/amd64,linux/arm64 \
+                    --cache-from type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE }}:buildcache \
+                    --cache-to type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE }}:buildcache,mode=max \
+                    --provenance=true \
+                    --sbom=true \
                     --push
