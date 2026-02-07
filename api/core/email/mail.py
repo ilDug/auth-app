@@ -1,9 +1,9 @@
 from enum import Enum, auto
 import smtplib
 import ssl
-from typing import Literal
+from typing import Annotated
 from email.mime.text import MIMEText
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel, SecretStr, Field
 from pydantic.networks import EmailStr
 import logging
 
@@ -37,11 +37,14 @@ class DagMailConfig(BaseModel):
     - NONE: disabilita TLS
     """
 
-    host: str
-    port: int = 465
-    user: EmailStr
-    password: SecretStr
-    tls_mode: TLS_MODE = TLS_MODE.AUTO
+    host: Annotated[str, Field(description="Indirizzo del server SMTP")]
+    port: Annotated[int, Field(description="Porta del server SMTP: 25, 465, 587")] = 465
+    user: Annotated[EmailStr, Field(description="Indirizzo email dell'utente")]
+    password: Annotated[SecretStr, Field(description="Password dell'utente")]
+    tls_mode: Annotated[
+        TLS_MODE,
+        Field(description="Modalità TLS da utilizzare: AUTO, SSL, STARTTLS, NONE"),
+    ] = TLS_MODE.AUTO
 
 
 class DagMail:
