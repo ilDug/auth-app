@@ -106,5 +106,5 @@ MAIL_CONFIG = (
 ET_PATH = ROOT / "lib/templates"
 
 # EMAIL TEMPLATES
-ET_USER_ACTIVATION = ET_PATH / "user-activation.html"
-ET_PASSWORD_RECOVER = ET_PATH / "recover-password.html"
+ET_USER_ACTIVATION = ET_PATH / "user-activation-simple.html"
+ET_PASSWORD_RECOVER = ET_PATH / "recover-password-simple.html"

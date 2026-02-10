@@ -25,7 +25,7 @@ from core.config import (
     FRONTEND_HOST,
 )
 from core.email import DagMail, DagMailConfig
-
+from icecream import ic
 
 class Account:
     ACTIVATION_SCOPE = "account_activation"
@@ -170,12 +170,14 @@ class Account:
             try:
                 config = DagMailConfig(**MAIL_CONFIG)
                 with DagMail(config) as ms:
+                    ms.set_sender(None)  # usa il sender di default configurato
                     ms.add_receiver(email)
-                    ms.messageHTML(body, "Attivazione Account")
-                    ms.send()
-                    return True
+                    ms.messageHTML(body, subject="Attivazione Account")
+                    delivery = ms.send()
+                    ic("invio email di attivazione", delivery)
+                    return True if not delivery else False
             except Exception as e:
-                print(str(e))
+                ic(str(e))
                 return False
 
         return await asyncio.to_thread(_send_email)
