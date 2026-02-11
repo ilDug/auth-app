@@ -50,6 +50,7 @@ class AccountModel(MongoBase):
         avoid_fields = {
             "password_hash",
             "keychain",
+            "email_hash",
         }
         if not include_id:
             avoid_fields.add("id")
@@ -61,7 +62,7 @@ class AccountRegistrationModel(AccountModel):
 
     email_hash: Annotated[
         str,
-        Field(None, title="Hash MD5 dell'email utente", exclude=True),
+        Field(None, title="Hash MD5 dell'email utente", exclude=False),
     ]
     password: Annotated[
         SecretStr, Field(title="Password dell'account", exclude=True, min_length=8)
