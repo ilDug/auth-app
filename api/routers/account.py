@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, Body, Path, Query, Response
 from core.config import COOKIES_SETTINGS
 from models import AccessRequestModel, AccountRegistrationModel
-from controllers.account import Account
+from controllers.account import Account, AccountActivation
 
 router = APIRouter(tags=["account"], prefix="/account")
 
@@ -30,16 +30,16 @@ async def user_exists(email_md5_hash: Annotated[str, Path(...)]):
     return await Account().exists(email_md5_hash)
 
 
-# @router.get("/activate/{key}")
-# async def activate(key: str):
-#     return await AccountActivation().activate(key)
+@router.get("/activate/{key}")
+async def activate(key: str):
+    return await AccountActivation().activate(key)
 
 
-# @router.get("/resend-activation/{email_md5_hash}")
-# async def resend(
-#     email_md5_hash: Annotated[str, Path(..., min_length=32, max_length=32)],
-# ):
-#     return await AccountActivation().resend_activation_email(email_md5_hash)
+@router.get("/resend-activation/{email_md5_hash}")
+async def resend(
+    email_md5_hash: Annotated[str, Path(..., min_length=32, max_length=32)],
+):
+    return await AccountActivation().resend_activation_email(email_md5_hash)
 
 
 # @router.post(

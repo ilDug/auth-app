@@ -95,9 +95,7 @@ class Account:
 
                     # inserisce il nuovo utente
                     if (
-                        c[DB]
-                        .accounts.insert_one(user.model_dump(), session=s)
-                        .inserted_id
+                        c[DB].accounts.insert_one(user.db_dump(), session=s).inserted_id
                         is None
                     ):
                         s.abort_transaction()
@@ -117,7 +115,7 @@ class Account:
                     if (
                         c[DB]
                         .account_actions_keys.insert_one(
-                            account_action_key.model_dump(), session=s
+                            account_action_key.db_dump(), session=s
                         )
                         .inserted_id
                         is None
@@ -143,16 +141,7 @@ class Account:
     async def exists(cls, email_hash: str) -> bool:
         """verifica se l'utente esiste nel database"""
         async with AsyncMongoClient(MONGO_CS) as c:
-            accounts = (
-                await c[DB].accounts.find({}, {"email": 1, "_id": 0}).to_list(None)
-            )
-
-            # esegui l'hashing MD5 in thread pool per evitare blocchi su grandi dataset
-            emails = await asyncio.to_thread(
-                lambda: [hashlib.md5(e["email"].encode()).hexdigest() for e in accounts]
-            )
-
-        return email_hash in emails
+            return await c[DB].accounts.count_documents({"emailHash": email_hash}) > 0
 
     @classmethod
     async def send_activation_email(cls, email: str, activation_key: str) -> bool:

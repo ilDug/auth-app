@@ -2,7 +2,7 @@ import hashlib
 import asyncio
 from datetime import datetime
 from fastapi import HTTPException
-from pymongo import AsyncMongoClient, DESCENDING
+from pymongo import AsyncMongoClient, DESCENDING, MongoClient
 from controllers import users
 from models import AccountModel, AccountActionKeyModel
 from .account import Account
@@ -24,13 +24,13 @@ class AccountActivation(Account):
         if not key or len(key) != ACTIVATION_KEY_LENGTH:
             raise HTTPException(400, "invalid activation link")
 
-        async with AsyncMongoClient(MONGO_CS) as c:
-            async with c.start_session() as s:
-                async with s.start_transaction():
+        with MongoClient(MONGO_CS) as c:
+            with c.start_session() as s:
+                with s.start_transaction():
 
                     #  cerca la chiave di attivazione nel database, se non presente solleva un'eccezione
                     #  in modo che solo chi ha ricevuto la chiave possa attivare l'account
-                    activation = await c[DB].account_actions_keys.find_one(
+                    activation = c[DB].account_actions_keys.find_one(
                         {"key": key},
                         session=s,
                     )
@@ -40,7 +40,7 @@ class AccountActivation(Account):
                     activation = AccountActionKeyModel(**activation)
 
                     #  cerca l'utente nel database,  utilizzando l'uid associato alla chiave di attivazione
-                    user = await c[DB].accounts.find_one(
+                    user = c[DB].accounts.find_one(
                         {"uid": str(activation.uid)},
                         session=s,
                     )
@@ -65,7 +65,7 @@ class AccountActivation(Account):
                     try:
                         #  aggiorna lo stato dell'account a attivo
                         res = (
-                            await c[DB].accounts.update_one(
+                            c[DB].accounts.update_one(
                                 {"uid": str(activation.uid)},
                                 {"$set": {"active": True}},
                                 session=s,
@@ -86,7 +86,7 @@ class AccountActivation(Account):
                     try:
                         # aggiorna la data di utilizzo della chiave di attivazione in modo da non poterla riutilizzare  in futuro
                         res = (
-                            await c[DB].account_actions_keys.update_one(
+                            c[DB].account_actions_keys.update_one(
                                 {"_id": activation.id},
                                 {"$set": {"usedAt": datetime.now()}},
                                 session=s,
