@@ -1,8 +1,19 @@
 from typing import Annotated
-from fastapi import APIRouter, Body, Path, Query, Response
-from core.config import ACTIVATION_KEY_LENGTH, COOKIES_SETTINGS
+from fastapi import (
+    APIRouter,
+    Body,
+    Cookie,
+    HTTPException,
+    Header,
+    Path,
+    Query,
+    Response,
+)
+from icecream import ic
+from core.config import ACTIVATION_KEY_LENGTH, COOKIES_SETTINGS, REGISTRATION_BEHAVIOUR
 from models import AccessRequestModel, AccountRegistrationModel, PasswordRestoreKeychain
 from controllers.account import Account, AccountActivation, Password
+from controllers.auth import get_token_claims, Auth
 from pydantic import EmailStr
 
 router = APIRouter(tags=["account"], prefix="/account")
@@ -20,10 +31,32 @@ async def register(
     res: Response,
     user: Annotated[AccountRegistrationModel, Body(...)],
     notify: Annotated[bool, Query()] = True,
+    authorization: Annotated[str | None, Header()] = None,
+    fingerprint: Annotated[str | None, Cookie()] = None,
 ):
-    token, fingerprint = await Account().register(user, notify=notify)
-    res.set_cookie("fingerprint", fingerprint, **COOKIES_SETTINGS)
-    return token
+
+    match REGISTRATION_BEHAVIOUR:
+        case "ALLOW_ANYBODY":
+            # se è permesso a chiunque di registrarsi, restituisco direttamente il token di accesso
+            token, fp = await Account().register(user, notify=notify)
+            res.set_cookie("fingerprint", fp, **COOKIES_SETTINGS)
+            return token
+
+        case "ONLY_ADMIN":
+            # se solo gli admin possono registrare nuovi utenti, restituisco un messaggio di successo generico
+            claims = get_token_claims(authorization, fingerprint)
+            permissions = claims.get("authorizations", [])
+            if "admin" not in permissions:
+                raise HTTPException(
+                    status_code=403,
+                    detail="only admins can register new users",
+                )
+
+            token, fp = await Account().register(user, notify=notify)
+            return {"message": f"user {user.email} registered successfully"}
+
+        case _:
+            raise ValueError("invalid registration behaviour setted in Env variables")
 
 
 @router.get("/exists/{email_md5_hash}")

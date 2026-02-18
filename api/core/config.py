@@ -2,11 +2,11 @@ from os import environ as env
 from pathlib import Path
 import json
 import uuid
+from enum import Enum
 
 ROOT = Path("/app")
 MODE = env.get("MODE", "PRODUCTION").upper()
 FRONTEND_HOST = env.get("FRONTEND_HOST", "http://localhost:4200")
-
 
 REGISTRATION_BEHAVIOUR = env.get("REGISTRATION_BEHAVIOUR", "ALLOW_ANYBODY")
 """
