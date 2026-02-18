@@ -50,6 +50,7 @@ class AccountModel(MongoBase):
         avoid_fields = {
             "password_hash",
             "keychain",
+            "email_hash",
         }
         if not include_id:
             avoid_fields.add("id")
@@ -61,7 +62,7 @@ class AccountRegistrationModel(AccountModel):
 
     email_hash: Annotated[
         str,
-        Field(None, title="Hash MD5 dell'email utente", exclude=True),
+        Field(None, title="Hash MD5 dell'email utente", exclude=False),
     ]
     password: Annotated[
         SecretStr, Field(title="Password dell'account", exclude=True, min_length=8)
@@ -141,7 +142,15 @@ class PasswordRestoreKeychain(BaseModel):
         str,
         Field(..., min_length=ACTIVATION_KEY_LENGTH, max_length=ACTIVATION_KEY_LENGTH),
     ]
-    newpassword: Annotated[SecretStr, Field(..., title="Nuova password")]
+    newpassword: Annotated[SecretStr, Field(..., title="Nuova password", min_length=8)]
+
+    @field_validator("key", mode="before")
+    def validate_key(cls, value: str) -> str:
+        if not value or len(value) != ACTIVATION_KEY_LENGTH:
+            raise ValueError(
+                f"La chiave di recupero non è valida e deve avere {ACTIVATION_KEY_LENGTH} caratteri"
+            )
+        return value
 
 
 class LoginResponse(BaseModel):

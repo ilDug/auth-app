@@ -1,0 +1,2 @@
+uv run python -m unittest discover -s tests
+#  the option -s specifies the directory to search for test modules. In this case, it is set to "tests", which means that the unittest framework will look for test modules in the "tests" directory and its subdirectories.

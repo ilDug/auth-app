@@ -61,7 +61,6 @@ jobs:
                   docker buildx create --driver docker-container --use
                   docker buildx build . \
                     --file Dockerfile \
-                    --tag ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ steps.versions.outputs.with_v }} \
                     --tag ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ steps.versions.outputs.without_v }} \
                     --tag ${{ env.REGISTRY }}/${{ env.IMAGE }}:latest \
                     --platform linux/amd64,linux/arm64 \

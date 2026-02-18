@@ -27,7 +27,7 @@ services:
             MONGO_USER: root
             MONGO_DB: auth
             MONGO_HOST: mongo1.dag.lan:27017,mongo2.dag.lan:27017,mongo3.dag.lan:27017
-            REGISTRATION_BEHAVIOUR: "ALLOW_ANYBODY"
+            REGISTRATION_BEHAVIOUR: "ALLOW_ANYBODY" # "ONLY_ADMIN" 
         ports:
             - 8000:8000
         volumes:

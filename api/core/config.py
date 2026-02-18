@@ -7,7 +7,6 @@ ROOT = Path("/app")
 MODE = env.get("MODE", "PRODUCTION").upper()
 FRONTEND_HOST = env.get("FRONTEND_HOST", "http://localhost:4200")
 
-
 REGISTRATION_BEHAVIOUR = env.get("REGISTRATION_BEHAVIOUR", "ALLOW_ANYBODY")
 """
 definisce il comportamento del sistema di registrazione
@@ -106,5 +105,5 @@ MAIL_CONFIG = (
 ET_PATH = ROOT / "lib/templates"
 
 # EMAIL TEMPLATES
-ET_USER_ACTIVATION = ET_PATH / "user-activation.html"
-ET_PASSWORD_RECOVER = ET_PATH / "recover-password.html"
+ET_USER_ACTIVATION = ET_PATH / "user-activation-simple.html"
+ET_PASSWORD_RECOVER = ET_PATH / "recover-password-simple.html"
