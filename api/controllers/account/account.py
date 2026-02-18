@@ -1,4 +1,3 @@
-import hashlib
 import asyncio
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError, VerificationError
@@ -26,6 +25,7 @@ from core.config import (
 )
 from core.email import DagMail, DagMailConfig
 from icecream import ic
+
 
 class Account:
     ACTIVATION_SCOPE = "account_activation"

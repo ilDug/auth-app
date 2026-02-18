@@ -27,7 +27,6 @@ from core.config import (
 
 
 class Password(Account):
-
     RECOVER_SCOPE = "recover_password"
     RECOVER_LINK = f"{FRONTEND_HOST}/account/password/restore"
 
@@ -47,7 +46,6 @@ class Password(Account):
             raise HTTPException(400, "indirizzo email non valido")
 
         async with AsyncMongoClient(MONGO_CS) as c:
-
             # cerca l'utente nel database
             user = await c[DB].accounts.find_one({"email": email})
             if user is None:

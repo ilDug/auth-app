@@ -1,9 +1,6 @@
-import hashlib
-import asyncio
 from datetime import datetime
 from fastapi import HTTPException
 from pymongo import AsyncMongoClient, DESCENDING, MongoClient
-from controllers import users
 from models import AccountModel, AccountActionKeyModel
 from .account import Account
 
@@ -15,7 +12,6 @@ from core.config import ACTIVATION_KEY_LENGTH, MONGO_CS, DB
 
 
 class AccountActivation(Account):
-
     @classmethod
     async def activate(cls, key: str) -> bool:
         """Attiva l'account dell'utente utilizzando la chiave di attivazione fornita"""
@@ -27,7 +23,6 @@ class AccountActivation(Account):
         with MongoClient(MONGO_CS) as c:
             with c.start_session() as s:
                 with s.start_transaction():
-
                     #  cerca la chiave di attivazione nel database, se non presente solleva un'eccezione
                     #  in modo che solo chi ha ricevuto la chiave possa attivare l'account
                     activation = c[DB].account_actions_keys.find_one(

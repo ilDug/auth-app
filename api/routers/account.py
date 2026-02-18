@@ -1,6 +1,5 @@
 from typing import Annotated
 from fastapi import APIRouter, Body, Path, Query, Response
-from fastapi.responses import PlainTextResponse
 from core.config import ACTIVATION_KEY_LENGTH, COOKIES_SETTINGS
 from models import AccessRequestModel, AccountRegistrationModel, PasswordRestoreKeychain
 from controllers.account import Account, AccountActivation, Password
