@@ -42,11 +42,16 @@ Base path: `/api/auth/v2`
 
 ### Account
 
-| METHOD | ENDPOINT                           | PAYLOAD             |
-| ------ | ---------------------------------- | ------------------- |
-| POST   | `/account/login`                   | `{email, password}` |
-| POST   | `/account/register?notify=true`    | `{email, password}` |
-| GET    | `/account/exists/{email_md5_hash}` |                     |
+| METHOD | ENDPOINT                                      | PAYLOAD              |
+| ------ | --------------------------------------------- | -------------------- |
+| POST   | `/account/login`                              | `{email, password}`  |
+| POST   | `/account/register?notify=true`               | `{email, password}`  |
+| GET    | `/account/exists/{email_md5_hash}`            |                      |
+| GET    | `/account/activate/{key}`                     |                      |
+| GET    | `/account/resend-activation/{email_md5_hash}` |                      |
+| POST   | `/account/password/recover`                   | `email` (as string)  |
+| GET    | `/account/password/restore/init/{key}`        |                      |
+| POST   | `/account/password/restore/set`               | `{key, newpassword}` |
 
 ### Digtal signature
 
@@ -61,6 +66,8 @@ Base path: `/api/auth/v2`
 | ------ | ------------------------------------ | ------------------------------------------------------------------------------------------------------- |
 | GET    | `/auth/authenticate?claims=true`     | <small>Uses the JWT in header. If claims are true returns the jwt payload, else return boolean.</small> |
 | GET    | `/auth/authorize?permission=<admin>` | <small>Set the permission or role you want to authorize.</small>                                        |
+
+### Users management
 
 | METHOD | ENDPOINT           | PAYLOAD               |
 | ------ | ------------------ | --------------------- |
