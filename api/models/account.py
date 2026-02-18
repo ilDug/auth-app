@@ -142,7 +142,15 @@ class PasswordRestoreKeychain(BaseModel):
         str,
         Field(..., min_length=ACTIVATION_KEY_LENGTH, max_length=ACTIVATION_KEY_LENGTH),
     ]
-    newpassword: Annotated[SecretStr, Field(..., title="Nuova password")]
+    newpassword: Annotated[SecretStr, Field(..., title="Nuova password", min_length=8)]
+
+    @field_validator("key", mode="before")
+    def validate_key(cls, value: str) -> str:
+        if not value or len(value) != ACTIVATION_KEY_LENGTH:
+            raise ValueError(
+                f"La chiave di recupero non è valida e deve avere {ACTIVATION_KEY_LENGTH} caratteri"
+            )
+        return value
 
 
 class LoginResponse(BaseModel):

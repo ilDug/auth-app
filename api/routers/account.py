@@ -1,8 +1,10 @@
 from typing import Annotated
 from fastapi import APIRouter, Body, Path, Query, Response
-from core.config import COOKIES_SETTINGS
-from models import AccessRequestModel, AccountRegistrationModel
-from controllers.account import Account, AccountActivation
+from fastapi.responses import PlainTextResponse
+from core.config import ACTIVATION_KEY_LENGTH, COOKIES_SETTINGS
+from models import AccessRequestModel, AccountRegistrationModel, PasswordRestoreKeychain
+from controllers.account import Account, AccountActivation, Password
+from pydantic import EmailStr
 
 router = APIRouter(tags=["account"], prefix="/account")
 
@@ -42,22 +44,27 @@ async def resend(
     return await AccountActivation().resend_activation_email(email_md5_hash)
 
 
-# @router.post(
-#     "/password/recover",
-#     description="genera una chiave di attivazione che permette di ripristinare la password",
-# )
-# async def password_recover(email: Annotated[dict, Body(...)]):
-#     return await Password().recover(email["email"])
+@router.post(
+    "/password/recover",
+    description="genera una chiave di attivazione che permette di ripristinare la password",
+)
+async def password_recover(email: Annotated[EmailStr, Body(...)]):
+    return await Password().recover(email)
 
 
-# @router.get(
-#     "/password/restore/init/{key}",
-#     description="esegue i controlli per la reimpostazione della password utente",
-# )
-# async def password_restore_init(key: Annotated[str, Path(...)]):
-#     return Password().restore_init(key)
+@router.get(
+    "/password/restore/init/{key}",
+    description="esegue i controlli per la reimpostazione della password utente",
+)
+async def password_restore_init(
+    key: Annotated[
+        str,
+        Path(..., min_length=ACTIVATION_KEY_LENGTH, max_length=ACTIVATION_KEY_LENGTH),
+    ],
+):
+    return await Password().restore_init(key)
 
 
-# @router.post("/password/restore/set", description="imposta la nuova password")
-# async def password_restore_set(keychain: Annotated[PasswordRestoreKeychain, Body()]):
-#     return Password().restore_set(keychain.key, keychain.newpassword)
+@router.post("/password/restore/set", description="imposta la nuova password")
+async def password_restore_set(keychain: Annotated[PasswordRestoreKeychain, Body()]):
+    return await Password().restore_set(keychain.key, keychain.newpassword)
