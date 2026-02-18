@@ -9,11 +9,10 @@ from fastapi import (
     Query,
     Response,
 )
-from icecream import ic
 from core.config import ACTIVATION_KEY_LENGTH, COOKIES_SETTINGS, REGISTRATION_BEHAVIOUR
 from models import AccessRequestModel, AccountRegistrationModel, PasswordRestoreKeychain
 from controllers.account import Account, AccountActivation, Password
-from controllers.auth import get_token_claims, Auth
+from controllers.auth import get_token_claims
 from pydantic import EmailStr
 
 router = APIRouter(tags=["account"], prefix="/account")

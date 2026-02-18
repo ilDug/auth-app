@@ -2,7 +2,6 @@ from os import environ as env
 from pathlib import Path
 import json
 import uuid
-from enum import Enum
 
 ROOT = Path("/app")
 MODE = env.get("MODE", "PRODUCTION").upper()
